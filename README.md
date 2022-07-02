@@ -264,3 +264,6 @@ git checkout dev
 # update the a-frame codepen
 open "https://codepen.io/jeromeetienne/pen/mRqqzb?editors=1000#0"
 ```
+
+# My tests
+[hw1]:<https://github.com/KingTa1487/AR/blob/master/three.js/myexamples/hw1.html>
