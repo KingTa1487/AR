@@ -266,4 +266,4 @@ open "https://codepen.io/jeromeetienne/pen/mRqqzb?editors=1000#0"
 ```
 
 # My tests
-[hw1](three.js/myexamples/hw1)
+[hw1](three.js/myexamples/hw1.html)
