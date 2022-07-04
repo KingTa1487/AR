@@ -267,5 +267,9 @@ open "https://codepen.io/jeromeetienne/pen/mRqqzb?editors=1000#0"
 
 # My tests
 HW1:
-Open this [hiro marker image](https://kingta1487.github.io/AR/data/images/HIRO.jpg) in your desktop browser.
-[hw1](https://kingta1487.github.io/AR/three.js/myexamples/hw1.html)
+- Open this [hiro marker image](https://kingta1487.github.io/AR/data/images/HIRO.jpg) in your desktop browser.
+- [hw1](https://kingta1487.github.io/AR/three.js/myexamples/hw1.html)
+
+Multi-Markers test:
+- Open this [hiro marker image](https://docs.google.com/presentation/d/1AkY9f027uylpC94SvzEilefLsgcQU24y8FMzVX9FYLc/edit#slide=id.gd02defb733_0_0) in your desktop browser.
+- [multi-marker test1](https://kingta1487.github.io/AR/three.js/myexamples/multi-test.html)
