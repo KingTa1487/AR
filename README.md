@@ -276,4 +276,4 @@ Multi-Markers test:
 
 project-test1:
 - Open this [hiro marker image](https://docs.google.com/presentation/d/1AkY9f027uylpC94SvzEilefLsgcQU24y8FMzVX9FYLc/edit#slide=id.gd02defb733_0_0) in your desktop browser.
-- [multi-marker test1](https://kingta1487.github.io/AR/three.js/myexamples/project-test1.html)
+- [project-test1](https://kingta1487.github.io/AR/three.js/myexamples/project-test1.html)
