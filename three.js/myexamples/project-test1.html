@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<!-- three.js library -->
+<script src='../examples/vendor/three.js/build/three.min.js'></script>
+<script src="../examples/vendor/three.js/examples/js/libs/stats.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<!-- ar.js -->
+<script src="../build/ar.js"></script>
+<script>THREEx.ArToolkitContext.baseURL = '../'</script>
+
+<body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
+<div style='font-size:2em;position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
+	<a href="https://github.com/jeromeetienne/AR.js/" target="_blank">AR.js</a> - three.js
+	<br/>
+	Initialize both markers, but show them in controlled fashion
+	<p style='color:yellow' id='printDis'></p>
+</div>
+
+<script>
+
+// global variables
+var renderer, scene, camera;
+var stats;
+var markerKanji, markerHiro;
+var arToolKitSource, arToolKitContext;
+
+var _iOSDevice;
+var theta = 0, i = 1;
+var boxPos = new THREE.Vector3(), toKanji;
+var tkx, tkz, nowPos, proPos;
+var puck;
+
+init();
+animate();
+
+/*class puck{
+	constructor(n, mesh){
+		this.n = n;
+		this
+	}
+}*/
+
+
+function init() {
+	// https://stackoverflow.com/questions/9038625/detect-if-device-is-ios?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+	let _iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
+
+	console.log ('iOS: ' + _iOSDevice)
+
+
+	// init renderer
+	renderer	= new THREE.WebGLRenderer({
+		// antialias	: true,
+		alpha: true
+	});
+	renderer.setClearColor(new THREE.Color('lightgrey'), 0);
+	// renderer.setPixelRatio( 1/2 );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.domElement.style.position = 'absolute';
+	renderer.domElement.style.top = '0px';
+	renderer.domElement.style.left = '0px';
+	document.body.appendChild( renderer.domElement );
+
+	// init scene and camera
+	scene	= new THREE.Scene();
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		Initialize a basic camera
+	////////////////////////////////////////////////////////////////////////////////// 
+
+	// Create a camera
+	camera = new THREE.Camera();
+	scene.add(camera);
+
+	////////////////////////////////////////////////////////////////////////////////
+	//          handle arToolkitSource
+	////////////////////////////////////////////////////////////////////////////////
+
+	arToolkitSource = new THREEx.ArToolkitSource({
+		// to read from the webcam 
+		sourceType : 'webcam',
+
+		// to read from an image
+		// sourceType : 'image',
+		// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/images/img.jpg',		
+
+		// to read from a video
+		// sourceType : 'video',
+		// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/videos/headtracking.mp4',		
+	})
+
+	arToolkitSource.init(function onReady(){
+		onResize()
+	})
+	
+	// handle resize
+	window.addEventListener('resize', function(){
+		onResize()
+	})
+	function onResize(){
+		arToolkitSource.onResize()	
+		arToolkitSource.copySizeTo(renderer.domElement)	
+		if( arToolkitContext.arController !== null ){
+			arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)	
+		}	
+	}
+	////////////////////////////////////////////////////////////////////////////////
+	//          initialize arToolkitContext
+	////////////////////////////////////////////////////////////////////////////////
+	
+	arToolkitContext = new THREEx.ArToolkitContext({
+		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../data/data/camera_para.dat',
+		detectionMode: 'mono',
+		maxDetectionRate: 30,
+		canvasWidth: 80*3,
+		canvasHeight: 60*3,
+	})
+	// initialize it
+	arToolkitContext.init(function onCompleted(){
+		// copy projection matrix to camera
+		camera.projectionMatrix.copy( arToolkitContext.getProjectionMatrix() );
+	})
+
+	markerHiro = addMarkerHiro();
+	scene.add (markerHiro); 
+	markerKanji = addMarkerKanji();
+	scene.add (markerKanji);
+	
+	stats = new Stats();
+	document.body.appendChild( stats.dom );
+
+}
+
+	
+
+	
+function addMarkerKanji () {
+	let markerRootKanji = new THREE.Group();
+	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootKanji, {
+		type : 'pattern',
+		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji'
+	})
+	
+	return markerRootKanji;
+}
+
+function addMarkerHiro(){
+	let markerRootHiro = new THREE.Group()
+
+	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootHiro, {
+		type : 'pattern',
+		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
+	})
+	
+	
+	// add a box for Hiro
+	puck = new THREE.Mesh( new THREE.CylinderGeometry(0.5, 0.5, 0.1, 32), new THREE.MeshNormalMaterial() );
+	puck2 = new THREE.Mesh( new THREE.CylinderGeometry(0.3, 0.3, 0.1, 32), new THREE.MeshNormalMaterial() );
+	puck2.visible = false;
+	markerRootHiro.add (puck, puck2);
+		
+	return markerRootHiro;
+}	
+
+function power(n){
+	return (n)*(n);
+}
+
+function update() {
+	
+	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
+	let toKanji = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	
+	if(power(toKanji.x - markerHiro.children[0].position.x) + power(toKanji.z - markerHiro.children[0].position.z) <= 0.25){
+		markerHiro.children[0].visible = false;
+		markerHiro.children[1].visible = true;
+	}
+	if(power(toKanji.x - markerHiro.children[1].position.x) + power(toKanji.z - markerHiro.children[1].position.z) <= 0.25)
+		markerHiro.children[1].visible = false;
+	
+	
+
+}
+
+function animate() {
+	theta += 0.015;
+	requestAnimationFrame (animate);
+	
+	if( arToolkitSource.ready === false )	return
+	arToolkitContext.update( arToolkitSource.domElement )
+
+	/*toKanji = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	var tkxz = Math.sqrt(toKanji.x*toKanji.x + toKanji.z*toKanji.z);
+	
+	if(tkx >= toKanji.x && Math.sin(theta) < 0){
+		markerHiro.children[0].visible = false;
+		boxPos.set(0, 0, 0);
+		theta = 0;
+		i = 1;
+	}
+	else{
+		markerHiro.children[0].visible = true;
+	}
+		
+	
+	tkx = 0.1*i/10;
+	
+	boxPos.set(tkx, Math.sin(theta), tkx*toKanji.z/toKanji.x);
+	markerHiro.children[0].position.copy (boxPos);*/
+	
+	toKanji = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	
+	if(markerHiro.children[0].position.x < 2 && markerHiro.children[0].visible === true){
+		markerHiro.children[0].position.x += 0.05;
+	}
+	else if(markerHiro.children[1].position.z < 1 && markerHiro.children[1].visible === true){
+		markerHiro.children[1].position.z += 0.02;
+	}
+	
+		
+	renderer.render (scene, camera);
+	stats.update(); 
+
+	let msg ='';
+	
+	if (markerHiro.visible === true) {
+		msg += ' Hiro '
+
+	}
+	if (markerKanji.visible === true) {
+		msg += ' Kanji';
+
+	}
+	update();
+	
+	$('#printDis').text (msg)
+	
+	i++;
+
+}
+
+</script></body>
