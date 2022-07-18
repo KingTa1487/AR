@@ -29,17 +29,23 @@ var _iOSDevice;
 var theta = 0, i = 1;
 var boxPos = new THREE.Vector3(), toKanji;
 var tkx, tkz, nowPos, proPos;
-var puck;
+var bubble1, bubbles = [];
+
+var markerRootHiro = new THREE.Group();
+
+class Bubble{
+	constructor(mesh, r){
+		this.mesh = mesh;
+		this.r = r;
+		
+		markerRootHiro.add(this.mesh);
+	}
+}
 
 init();
 animate();
 
-/*class puck{
-	constructor(n, mesh){
-		this.n = n;
-		this
-	}
-}*/
+
 
 
 function init() {
@@ -80,14 +86,7 @@ function init() {
 	arToolkitSource = new THREEx.ArToolkitSource({
 		// to read from the webcam 
 		sourceType : 'webcam',
-
-		// to read from an image
-		// sourceType : 'image',
-		// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/images/img.jpg',		
-
-		// to read from a video
-		// sourceType : 'video',
-		// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/videos/headtracking.mp4',		
+	
 	})
 
 	arToolkitSource.init(function onReady(){
@@ -146,39 +145,62 @@ function addMarkerKanji () {
 }
 
 function addMarkerHiro(){
-	let markerRootHiro = new THREE.Group()
 
 	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootHiro, {
 		type : 'pattern',
 		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
 	})
 	
+	/*let bubble = makebubble('cyan', 0.25);
+	bubble1 = new Bubble(bubble, 0.25);
 	
-	// add a box for Hiro
-	puck = new THREE.Mesh( new THREE.CylinderGeometry(0.5, 0.5, 0.1, 32), new THREE.MeshNormalMaterial() );
-	puck2 = new THREE.Mesh( new THREE.CylinderGeometry(0.3, 0.3, 0.1, 32), new THREE.MeshNormalMaterial() );
-	puck2.visible = false;
-	markerRootHiro.add (puck, puck2);
+	if(Math.floor(Math.random()*100)%2 == 0)
+		bubble1.mesh.position.set(Math.random() + 2, 0, Math.random() + 2);
+	else
+		bubble1.mesh.position.set(-Math.random() - 2, 0, Math.random() + 2);
+	bubbles.push(bubble1);*/
+	makebubble('cyan', 0.25);
 		
 	return markerRootHiro;
 }	
 
+function makebubble(color, r){
+	let bubble = new THREE.Mesh( new THREE.RingGeometry(r, r+0.1, 32), new THREE.MeshBasicMaterial({color : color, side : THREE.DoubleSide}) );
+	bubble.rotation.x = Math.PI/2;
+	bubble1 = new Bubble(bubble, r);
+	bubbles.push(bubble1);
+		
+	if(Math.floor(Math.random()*100)%2 == 0)
+		bubble1.mesh.position.set(Math.random()*2 + 1 , 0, Math.random()*2 + 1);
+	else
+		bubble1.mesh.position.set(-Math.random()*2 , 0, Math.random()*2 + 1);
+	
+	return bubbles;
+}
+
 function power(n){
 	return (n)*(n);
+}
+
+function collision(target){
+	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
+	let toKanji = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	
+	if(power(target.position.x - toKanji.x) + power(target.position.z - toKanji.z) <= 0.25)
+		console.log("success");
 }
 
 function update() {
 	
 	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
 	let toKanji = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
-	
-	if(power(toKanji.x - markerHiro.children[0].position.x) + power(toKanji.z - markerHiro.children[0].position.z) <= 0.25){
-		markerHiro.children[0].visible = false;
-		markerHiro.children[1].visible = true;
-	}
-	if(power(toKanji.x - markerHiro.children[1].position.x) + power(toKanji.z - markerHiro.children[1].position.z) <= 0.25)
-		markerHiro.children[1].visible = false;
-	
+}
+
+function sleep(time)
+{
+    return(new Promise(function(resolve, reject) {
+        setTimeout(function() { resolve(); }, time);
+    }));
 }
 
 function animate() {
@@ -187,34 +209,37 @@ function animate() {
 	
 	if( arToolkitSource.ready === false )	return
 	arToolkitContext.update( arToolkitSource.domElement )
-
-	/*toKanji = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
-	var tkxz = Math.sqrt(toKanji.x*toKanji.x + toKanji.z*toKanji.z);
-	
-	if(tkx >= toKanji.x && Math.sin(theta) < 0){
-		markerHiro.children[0].visible = false;
-		boxPos.set(0, 0, 0);
-		theta = 0;
-		i = 1;
-	}
-	else{
-		markerHiro.children[0].visible = true;
-	}
-		
-	
-	tkx = 0.1*i/10;
-	
-	boxPos.set(tkx, Math.sin(theta), tkx*toKanji.z/toKanji.x);
-	markerHiro.children[0].position.copy (boxPos);*/
-	
 	toKanji = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+
 	
-	if(markerHiro.children[0].position.x < 2 && markerHiro.children[0].visible === true){
-		markerHiro.children[0].position.x += 0.05;
+	if(bubbles[0].r < 1){
+		let pos = bubbles[0].mesh.position;
+		let l = bubbles[0].r;
+		l += 0.005;
+		markerRootHiro.remove(bubbles[0].mesh);
+		bubbles.shift();
+		makebubble('cyan', l);
+		bubbles[0].mesh.position.copy(pos);
+		
 	}
-	else if(markerHiro.children[1].position.z < 1 && markerHiro.children[1].visible === true){
-		markerHiro.children[1].position.z += 0.02;
+	if(bubbles[0].r >= 1 && bubbles[0].r < 1.2){
+		//console.log()
+		collision(bubbles[0].mesh);
+		let pos = bubbles[0].mesh.position;
+		let l = bubbles[0].r;
+		l += 0.005;
+		markerRootHiro.remove(bubbles[0].mesh);
+		bubbles.shift();
+		makebubble('red', l);
+		bubbles[0].mesh.position.copy(pos);
 	}
+	if (bubbles[0].r >= 1.2){
+		markerRootHiro.remove(bubbles[0].mesh);
+		bubbles.shift();
+		makebubble('cyan', 0.25);
+		
+	}
+
 	
 		
 	renderer.render (scene, camera);
