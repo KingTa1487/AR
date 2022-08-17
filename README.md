@@ -15,3 +15,7 @@ project-test1:
 project-test2:
 - Open this [hiro marker image](https://docs.google.com/presentation/d/1AkY9f027uylpC94SvzEilefLsgcQU24y8FMzVX9FYLc/edit#slide=id.gd02defb733_0_0) in your desktop browser.
 - [project-test2](https://kingta1487.github.io/AR/three.js/myexamples/project-test2.html)
+
+bubble test:
+- Open this [hiro marker image](https://docs.google.com/presentation/d/1AkY9f027uylpC94SvzEilefLsgcQU24y8FMzVX9FYLc/edit#slide=id.gd02defb733_0_0) in your desktop browser.
+- [project-test2](https://kingta1487.github.io/AR/three.js/myexamples/Bubbletest.html)
