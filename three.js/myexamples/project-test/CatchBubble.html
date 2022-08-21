@@ -118,7 +118,7 @@ function init() {
 	////////////////////////////////////////////////////////////////////////////////
 	
 	arToolkitContext = new THREEx.ArToolkitContext({
-		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../../data/data/camera_para.dat',
+		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../data/data/camera_para.dat',
 		detectionMode: 'mono',
 		maxDetectionRate: 30,
 		canvasWidth: 80*3,
@@ -145,7 +145,7 @@ function addMarkerHiro(){
 
 	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootHiro, {
 		type : 'pattern',
-		patternUrl : THREEx.ArToolkitContext.baseURL + '../../data/data/patt.hiro'
+		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
 	})
 	
 	setInterval(makeTB, 1050);
@@ -167,7 +167,7 @@ function addMarkerKanji () {
 	let markerRootKanji = new THREE.Group();
 	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootKanji, {
 		type : 'pattern',
-		 patternUrl : THREEx.ArToolkitContext.baseURL + '../../data/data/patt.kanji'
+		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji'
 	})
 	
 	catcher = new Catcher(); 
