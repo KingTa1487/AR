@@ -146,17 +146,24 @@ function addMarkerKanji () {
 	return markerRootKanji;
 }
 
-function test(ball){
+/*function test(cylinder){
 	//markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
-	let tocatcher = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
-	console.log(tocatcher)
-}	
+	let ctob = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	let x = ball.position.x - ctob.x;
+	if(x >= 0){
+		cylinder.position.x += ctob.x*2;
+	}
+	if(x < 0){
+		cylinder.position.x -= ctob.x*2;
+	}
+	console.log(cylinder.position)
+}	*/
 
 function animate() {
 	requestAnimationFrame (animate);
 	stats.update();
 	
-	test(ball);
+	//test(cylinder);
 	
 	if( arToolkitSource.ready === false )	return
 		arToolkitContext.update( arToolkitSource.domElement )
@@ -164,14 +171,7 @@ function animate() {
 	//markerHiro.children[0].rotation.x += 0.1;
 	angle += 0.1;
 	
-	//markerHiro.children[0].position.set(-0.5*Math.sin(angle), 0.5, 0.5*Math.cos(angle));
 	
-	if(count <= 0)
-		angle2 *= -1;
-	if(angle2 < 0 && count >= 2)
-		angle2 *= -1;
-		
-	//onsole.log(v, w);
 	
 	renderer.render (scene, camera);	
 }
