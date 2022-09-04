@@ -1004,10 +1004,13 @@ var Qb=[Ik,Zh,_h,Qj,Qi,Pi,Ri,Ag,sg,qg,rg,yg,kh,jh,Oi,Mj];var Rb=[Jk,ki,ji,gi];va
 		if (this.orientation === 'portrait') {
 			this.ctx.save();
 			this.ctx.translate(this.canvas.width, 0);
+			this.ctx.scale(-1, 1);
 			this.ctx.rotate(Math.PI/2);
 			this.ctx.drawImage(image, 0, 0, this.canvas.height, this.canvas.width); // draw video
 			this.ctx.restore();
 		} else {
+			//this.ctx.translate(this.canvas.width, 0);
+			//this.ctx.scale(-1, 1);
 			this.ctx.drawImage(image, 0, 0, this.canvas.width, this.canvas.height); // draw video
 		}
 
@@ -1099,7 +1102,8 @@ var Qb=[Ik,Zh,_h,Qj,Qi,Pi,Ri,Ag,sg,qg,rg,yg,kh,jh,Oi,Mj];var Rb=[Jk,ki,ji,gi];va
 		var onError = configuration.onError || function(err) { console.error("ARController.getUserMedia", err); };
 
 		var video = document.createElement('video');
-
+		//////video{transform : rotateY(180deg);}
+		
 		var initProgress = function() {
 			if (this.videoWidth !== 0) {
 				onSuccess(video);

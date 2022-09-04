@@ -17,8 +17,14 @@
 	<p style='color:yellow' id='printDis'></p>
 	
 	<button id="go">Go!</button>
-	
 </div>
+
+<style>
+	video {
+		-webkit-transform: scaleX(-1);
+		transform: scaleX(-1);
+	}
+</style>
 
 <script src="Catcher.js"></script>
 <script src="TempoBubble.js"></script> 
@@ -171,6 +177,7 @@ function addMarkerKanji () {
 	})
 	
 	catcher = new Catcher(); 
+	
 	markerRootKanji.add(catcher.catcher);
 	
 	return markerRootKanji;
@@ -180,6 +187,7 @@ function catchB(target){
 	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
 	let tocatcher = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
 
+	//console.log(tocatcher);
 	if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
 		target.boom = true;
 	}
@@ -218,7 +226,7 @@ function animate() {
 	requestAnimationFrame (animate);
 	
 	if( arToolkitSource.ready === false )	return
-	arToolkitContext.update( arToolkitSource.domElement )
+		arToolkitContext.update( arToolkitSource.domElement )
 
 	if(go == true){
 		play();
