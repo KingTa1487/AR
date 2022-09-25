@@ -26,4 +26,4 @@ Catch Bubble:
 
 Camera test:
 - Open this [hiro marker image](https://docs.google.com/presentation/d/1AkY9f027uylpC94SvzEilefLsgcQU24y8FMzVX9FYLc/edit#slide=id.gd02defb733_0_0) in your desktop browser.
-- [CatchBubble](https://kingta1487.github.io/AR/three.js/myexamples/camera-test.html)
+- [Camera test](https://kingta1487.github.io/AR/three.js/myexamples/camera-test.html)
