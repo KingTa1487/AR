@@ -115,7 +115,11 @@ function addMarkerHiro(){
 	
 	ball = new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 4, 100), new THREE.MeshNormalMaterial());
 	ball.rotation.x = Math.PI/2;
-	markerRootHiro.add(ball);
+	ball.position.x = -2;
+	
+	var circle = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshNormalMaterial({DoubleSide : true, opacity : 1}));
+	circle.rotation.x = -Math.PI/2;
+	markerRootHiro.add(ball, circle);
 	
 
 	return markerRootHiro;
