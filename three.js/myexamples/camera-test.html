@@ -15,13 +15,6 @@
 Minimal Version
 </div>
 
-<style>
-	video {
-		-webkit-transform: scaleX(-1);
-		transform: scaleX(-1);
-	}
-</style>
-
 <script>
 
 // global variables
@@ -118,14 +111,10 @@ function addMarkerHiro(){
 		type : 'pattern',
 		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
 	})
-	var light = new THREE.PointLight();
-	light.position.set(0, 80, 0);
-	scene.add(light);
 
 	
-	ball = new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 5), new THREE.MeshNormalMaterial());
-	ball.position.z = 0.5;
-	ball.position.x = 1;
+	ball = new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 4, 100), new THREE.MeshNormalMaterial());
+	ball.rotation.x = Math.PI/2;
 	markerRootHiro.add(ball);
 	
 
@@ -138,10 +127,6 @@ function addMarkerKanji () {
 		type : 'pattern',
 		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji'
 	})
-	
-	cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.53, 0.5, 32), new THREE.MeshBasicMaterial({color:"hsl(240, 100%, 50%)"}));
-	cylinder.position.y = 0.5;
-	markerRootKanji.add(cylinder);
 	
 	return markerRootKanji;
 }

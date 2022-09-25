@@ -19,12 +19,12 @@
 	<button id="go">Go!</button>
 </div>
 
-<style>
+<!--style>
 	video {
 		-webkit-transform: scaleX(-1);
 		transform: scaleX(-1);
 	}
-</style>
+</style-->
 
 <script src="Catcher.js"></script>
 <script src="TempoBubble.js"></script> 
@@ -280,6 +280,7 @@ function animate() {
 		
 		i++;
 	}
+	console.log(markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0))));
 		
 	renderer.render (scene, camera);
 	stats.update(); 
