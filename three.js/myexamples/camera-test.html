@@ -119,7 +119,12 @@ function addMarkerHiro(){
 	
 	var circle = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshNormalMaterial({DoubleSide : true, opacity : 1}));
 	circle.rotation.x = -Math.PI/2;
-	markerRootHiro.add(ball, circle);
+	
+	var plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshNormalMaterial());
+	plane.rotation.x = -Math.PI/2;
+	plane.position.x = 2
+	
+	markerRootHiro.add(ball, circle, plane);
 	
 
 	return markerRootHiro;
@@ -135,18 +140,6 @@ function addMarkerKanji () {
 	return markerRootKanji;
 }
 
-/*function test(cylinder){
-	//markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
-	let ctob = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
-	let x = ball.position.x - ctob.x;
-	if(x >= 0){
-		cylinder.position.x += ctob.x*2;
-	}
-	if(x < 0){
-		cylinder.position.x -= ctob.x*2;
-	}
-	console.log(cylinder.position)
-}	*/
 
 function animate() {
 	requestAnimationFrame (animate);
