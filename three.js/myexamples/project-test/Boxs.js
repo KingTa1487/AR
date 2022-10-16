@@ -1,16 +1,16 @@
 class Boxs{
-	constructor(bubble){
-		this.b1 = box();	this.b2 = box();	this.b3 = box();
-		this.b4 = box();	this.b5 = box();	this.b6 = box();
-		this.b7 = box();	this.b8 = box();	this.b9 = box();
+	constructor(bubble, wc){
+		this.b1 = box(wc);	this.b2 = box(wc);	this.b3 = box(wc);
+		this.b4 = box(wc);	this.b5 = box(wc);	this.b6 = box(wc);
+		this.b7 = box(wc);	this.b8 = box(wc);	this.b9 = box(wc);
 		
-		this.b10 = box();	this.b11 = box();	this.b12 = box();
-		this.b13 = box();	this.b14 = box();	this.b15 = box();
-		this.b16 = box();	this.b17 = box();	this.b18 = box();
+		this.b10 = box(wc);	this.b11 = box(wc);	this.b12 = box(wc);
+		this.b13 = box(wc);	this.b14 = box(wc);	this.b15 = box(wc);
+		this.b16 = box(wc);	this.b17 = box(wc);	this.b18 = box(wc);
 		
-		this.b19 = box();	this.b20 = box();	this.b21 = box();
-		this.b22 = box();	this.b23 = box();	this.b24 = box();
-		this.b25 = box();	this.b26 = box();	this.b27 = box();
+		this.b19 = box(wc);	this.b20 = box(wc);	this.b21 = box(wc);
+		this.b22 = box(wc);	this.b23 = box(wc);	this.b24 = box(wc);
+		this.b25 = box(wc);	this.b26 = box(wc);	this.b27 = box(wc);
 		
 		this.Box = new THREE.Group();
 		
@@ -35,10 +35,10 @@ class Boxs{
 	}
 }
 
-function box(){
+function box(wc){
 	let box = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshPhongMaterial({transparent : true, opacity : 0.7}));
 	//box.material.emissive = new THREE.Color(0xFFF000);
-	box.material.emissive.setHSL(1/6, 1, 0.5);
+	box.material.emissive.setHSL(wc, 1, 0.5);
 	return box;
 }
 

@@ -29,6 +29,7 @@
 <script src="Catcher.js"></script>
 <script src="TempoBubble.js"></script> 
 <script src="Boxs.js"></script>
+<script src="Options.js"></script>
 
 <script>
 
@@ -45,6 +46,7 @@ var markerRootHiro = new THREE.Group();
 
 
 var scale = 0, angle = 0;
+var options = new Options();
 var B = [], BX = [], box, bubble, catcher;
 var i = 0, min = i, Mtimes = 0, go = false;
 
@@ -154,12 +156,18 @@ function addMarkerHiro(){
 		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
 	})
 	
+	
 	setInterval(makeTB, 1050);
 	//makeTB();
 	
 	var light = new THREE.PointLight(0xffffff, 10, 100);
 	markerRootHiro.add(light);	
 	light.position.set(0.5, 0.8, 0);
+	
+	
+	console.log(options.begin);
+	
+	
 	return markerRootHiro;
 }
 
@@ -187,9 +195,9 @@ function catchB(target){
 	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
 	let tocatcher = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
 
-	//console.log(tocatcher);
 	if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
 		target.boom = true;
+		getScore(options);
 	}
 }
 
@@ -199,12 +207,12 @@ function makeTB(){
 	markerRootHiro.add(bubble.bubble);
 	B.push(bubble);
 	
-	makeBX(B[Mtimes].bubble);
+	makeBX(B[Mtimes].bubble, B[Mtimes].whichcolor);
 	Mtimes++;
 }	
-function makeBX(bubble){
+function makeBX(bubble, whichcolor){
 	
-	let box = new Boxs(bubble);
+	let box = new Boxs(bubble, whichcolor);
 	BX.push(box);
 	box.Box.visible = false;
 }
@@ -241,23 +249,23 @@ function animate() {
 		
 		if(B[i].bubble.visible == true){
 			//旋轉/////////////////////////////////
-			angle += 0.02;
+			angle += 0.03;
 	
 			B[i].bubble.rotation.x = angle;
 			B[i].bubble.rotation.y = angle;
 	
 			//變大
-			if(B[i].bubble.scale.x < 4.5){
+			if(B[i].bubble.scale.x < 5){
 				
 				B[i].sc += 0.03;
 				B[i].bubble.scale.set(B[i].sc, B[i].sc, B[i].sc);
 		
-				if(B[i].bubble.scale.x > 3.5 && B[i].bubble.scale.x < 4.5){
+				if(B[i].bubble.scale.x > 4 && B[i].bubble.scale.x < 5){
 					catchB(B[i]);
 					B[i].bubble.material.color.setHSL(0, 1, 0.5);
 				}
 			}
-			else if(B[i].bubble.scale.x >= 4.5 ){
+			else if(B[i].bubble.scale.x >= 5 ){
 				B[i].bubble.visible = false;
 				markerRootHiro.remove(B[i].bubble);
 			}
@@ -280,7 +288,7 @@ function animate() {
 		
 		i++;
 	}
-	console.log(markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0))));
+	
 		
 	renderer.render (scene, camera);
 	stats.update(); 
