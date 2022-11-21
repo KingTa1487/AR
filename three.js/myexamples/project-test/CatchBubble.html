@@ -15,8 +15,6 @@
 	<br/>
 	Initialize both markers, but show them in controlled fashion
 	<p style='color:yellow' id='printDis'></p>
-	
-	<button id="go">Go!</button>
 </div>
 
 <!--style>
@@ -36,19 +34,19 @@
 // global variables
 var renderer, scene, camera;
 var stats;
-var markerKanji, markerHiro;
+var markerKanji, markerHiro, markerletterA;
 var arToolKitSource, arToolKitContext;
 
 var _iOSDevice;
-var boxPos = new THREE.Vector3(), toKanji;
+var boxPos = new THREE.Vector3(), toKanji, toletterA;
 var markerRootHiro = new THREE.Group();
 ///////////////////////////////////////////
 
 
 var scale = 0, angle = 0;
 var options = new Options();
-var B = [], BX = [], box, bubble, catcher;
-var i = 0, min = i, Mtimes = 0, go = false;
+var B = [], BX = [], box, bubble, catcher = new Catcher(); ;
+var i = 0, start = 0, Mtimes = 0;
 
 
 init();
@@ -61,9 +59,6 @@ function playAudio() {
 }
 //playAudio();
 
-$("#go").click(function(){
-	go = !go;
-})
 
 function init() {
 	// https://stackoverflow.com/questions/9038625/detect-if-device-is-ios?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
@@ -142,46 +137,36 @@ function init() {
 	scene.add (markerKanji);
 	markerHiro = addMarkerHiro();
 	scene.add (markerHiro); 
+	markerletterA = addMarkerletterA();
+	scene.add (markerletterA); 
 	
 	stats = new Stats();
 	document.body.appendChild( stats.dom );
 
 }
 
-	
 function addMarkerHiro(){
 
 	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootHiro, {
 		type : 'pattern',
 		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
 	})
-	
-	
-	setInterval(makeTB, 1050);
-	//makeTB();
+
 	
 	var light = new THREE.PointLight(0xffffff, 10, 100);
-	markerRootHiro.add(light);	
+	markerRootHiro.add(light, options.startPoint, options.endPoint, options.conPoint, options.pausePoint);	
 	light.position.set(0.5, 0.8, 0);
-	
-	
-	console.log(options.begin);
-	
+	options.endPoint.visible = false;
+	options.conPoint.visible = false;
 	
 	return markerRootHiro;
 }
-
-/*function play(){
-	setInterval(makeTB, 1050);
-	//playAudio();
-}*/
-
 	
 function addMarkerKanji () {
 	let markerRootKanji = new THREE.Group();
 	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootKanji, {
 		type : 'pattern',
-		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji'
+		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/kanji.patt'
 	})
 	
 	catcher = new Catcher(); 
@@ -190,6 +175,58 @@ function addMarkerKanji () {
 	
 	return markerRootKanji;
 }
+
+function addMarkerletterA () {
+	let markerRootletterA = new THREE.Group();
+	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootletterA, {
+		type : 'pattern',
+		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/letterA.patt'
+	})
+	
+	markerRootletterA.add(catcher.stoper);
+	
+	return markerRootletterA;
+}
+
+function play(){
+	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
+	let toplay = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	let tostop = markerHiro.worldToLocal(markerletterA.localToWorld(new THREE.Vector3(0, 0, 0)));
+	
+	//開始
+	if(options.start === false && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
+		options.start = true;				
+		options.play = true;
+		setTimeout("makeTB(3000)", 1050);
+		options.startPoint.visible = false;
+		options.endPoint.visible = true;
+	}
+	//繼續
+	if(options.start === true && options.play === false && power(-2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
+		options.play = true;
+		options.pause = false;
+		options.conPoint.visible = false;
+		options.pausePoint.visible = true;
+	}
+	
+	//結束
+	if(options.start === true && power(2.5 - tostop.x) + power(0 - tostop.z) <= 0.5){
+		options.start = false;
+		options.play = false;
+		options.endPoint.visible = false;
+		options.startPoint.visible = true;
+		console.log(999);
+	}
+	//暫停
+	if(options.start === true && options.play === true && power(-2.5 - tostop.x) + power(0 - tostop.z) <= 0.5){
+		options.play = false;
+		options.pause = true;
+		options.pausePoint.visible = false;
+		options.conPoint.visible = true;
+		console.log(666);
+	}
+}
+
 
 function catchB(target){
 	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
@@ -202,13 +239,19 @@ function catchB(target){
 }
 
 
-function makeTB(){
-	let bubble = new TempoBubble();
-	markerRootHiro.add(bubble.bubble);
-	B.push(bubble);
+function makeTB(x){
 	
-	makeBX(B[Mtimes].bubble, B[Mtimes].whichcolor);
-	Mtimes++;
+	if(options.play === true){
+		let bubble = new TempoBubble();
+		markerRootHiro.add(bubble.bubble);
+		B.push(bubble);
+			
+		makeBX(B[Mtimes].bubble, B[Mtimes].whichcolor);
+		Mtimes++;
+			
+			
+		setTimeout("makeTB(3000)", x);
+	}
 }	
 function makeBX(bubble, whichcolor){
 	
@@ -227,66 +270,71 @@ function update() {
 	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
 }
 
-
-
+//泡泡的setTimeout運算暫停時間
 function animate() {
 
 	requestAnimationFrame (animate);
 	
 	if( arToolkitSource.ready === false )	return
 		arToolkitContext.update( arToolkitSource.domElement )
-
-	if(go == true){
-		play();
-		go = false;
-	}
 	
-	for(;;){
-		if(B[i] == undefined){
-			i = 0;
-			break;
-		}
+	/*if(start === 1){
+		setTimeout(() => start = 0, 2000)
+	}*/
+	
+	play();
+	
+	if(options.start === true && options.)	
+		for(;;){
+			if(B[i] == undefined){
+				i = 0;
+				break;
+			}
+			
+			
+			if(B[i].bubble.visible === true){
+				//旋轉/////////////////////////////////
+				angle += 0.03;
 		
-		if(B[i].bubble.visible == true){
-			//旋轉/////////////////////////////////
-			angle += 0.03;
-	
-			B[i].bubble.rotation.x = angle;
-			B[i].bubble.rotation.y = angle;
-	
-			//變大
-			if(B[i].bubble.scale.x < 5){
-				
-				B[i].sc += 0.03;
-				B[i].bubble.scale.set(B[i].sc, B[i].sc, B[i].sc);
+				B[i].bubble.rotation.x = angle;
+				B[i].bubble.rotation.y = angle;
 		
-				if(B[i].bubble.scale.x > 4 && B[i].bubble.scale.x < 5){
-					catchB(B[i]);
-					B[i].bubble.material.color.setHSL(0, 1, 0.5);
+				//變大
+				if(B[i].bubble.scale.x < 5){
+					
+					B[i].sc += 0.03;
+					B[i].bubble.scale.set(B[i].sc, B[i].sc, B[i].sc);
+			
+					if(B[i].bubble.scale.x > 4 && B[i].bubble.scale.x < 5){
+						catchB(B[i]);
+						B[i].bubble.material.color.setHSL(0, 1, 0.5);
+					}
+				}
+				else if(B[i].bubble.scale.x >= 5 ){
+					B[i].bubble.visible = false;
+					markerRootHiro.remove(B[i].bubble);
 				}
 			}
-			else if(B[i].bubble.scale.x >= 5 ){
+			//爆破
+			if(B[i].boom == true){
+				//泡泡本體要消失
 				B[i].bubble.visible = false;
 				markerRootHiro.remove(B[i].bubble);
+				
+				B[i].sc -= 0.15;
+				BX[i].Box.visible = true;
+				explode(angle*5, B[i].sc, BX[i].Box);
+				
+				if(BX[i].Box.children[0].material.opacity <= 0){
+					BX[i].Box.visible = false;
+					markerRootHiro.remove(BX[i].Box);
+				}
 			}
-		}
-		//爆破
-		if(B[i].boom == true){
-			//泡泡本體要消失
-			B[i].bubble.visible = false;
-			markerRootHiro.remove(B[i].bubble);
 			
-			B[i].sc -= 0.15;
-			BX[i].Box.visible = true;
-			explode(angle*5, B[i].sc, BX[i].Box);
-			
-			if(BX[i].Box.children[0].material.opacity <= 0){
-				BX[i].Box.visible = false;
-				markerRootHiro.remove(BX[i].Box);
-			}
+			i++;
 		}
+	else{
 		
-		i++;
 	}
 	
 		
@@ -301,6 +349,10 @@ function animate() {
 	}
 	if (markerKanji.visible === true) {
 		msg += ' Kanji';
+
+	}
+	if (markerletterA.visible === true) {
+		msg += ' letterA';
 
 	}
 	update();

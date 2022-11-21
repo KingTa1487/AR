@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<!-- three.js library -->
+<script src='../../examples/vendor/three.js/build/three.min.js'></script>
+<script src="../../examples/vendor/three.js/examples/js/libs/stats.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<!-- ar.js -->
+<script src="../../build/ar.js"></script>
+<script>THREEx.ArToolkitContext.baseURL = '../../'</script>
+
+<body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
+<div style='font-size:2em;position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
+	<a href="https://github.com/jeromeetienne/AR.js/" target="_blank">AR.js</a> - three.js
+	<br/>
+	Initialize both markers, but show them in controlled fashion
+	<p style='color:yellow' id='printDis'></p>
+</div>
+
+<!--style>
+	video {
+		-webkit-transform: scaleX(-1);
+		transform: scaleX(-1);
+	}
+</style-->
+
+<script src="Catcher.js"></script>
+<script src="TempoBubble.js"></script> 
+<script src="Boxs.js"></script>
+<script src="Options.js"></script>
+
+<script>
+
+// global variables
+var renderer, scene, camera;
+var stats;
+var markerKanji, markerHiro;
+var arToolKitSource, arToolKitContext;
+
+var _iOSDevice;
+var boxPos = new THREE.Vector3(), toKanji;
+var markerRootHiro = new THREE.Group();
+///////////////////////////////////////////
+
+
+var scale = 0, angle = 0;
+var options = new Options();
+var B = [], BX = [], box, bubble, catcher;
+var i = 0, start = 0, Mtimes = 0;
+
+
+init();
+animate();
+
+function playAudio() {
+　const audio = document.createElement("audio");
+　audio.src = "Zoom.mp3";
+　audio.play();
+}
+//playAudio();
+
+
+function init() {
+	// https://stackoverflow.com/questions/9038625/detect-if-device-is-ios?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+	let _iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
+
+	console.log ('iOS: ' + _iOSDevice)
+
+
+	// init renderer
+	renderer	= new THREE.WebGLRenderer({
+		// antialias	: true,
+		alpha: true
+	});
+	renderer.setClearColor(new THREE.Color('lightgrey'), 0);
+	// renderer.setPixelRatio( 1/2 );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.domElement.style.position = 'absolute';
+	renderer.domElement.style.top = '0px';
+	renderer.domElement.style.left = '0px';
+	document.body.appendChild( renderer.domElement );
+
+	// init scene and camera
+	scene	= new THREE.Scene();
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		Initialize a basic camera
+	////////////////////////////////////////////////////////////////////////////////// 
+
+	// Create a camera
+	camera = new THREE.Camera();
+	scene.add(camera);
+
+	////////////////////////////////////////////////////////////////////////////////
+	//          handle arToolkitSource
+	////////////////////////////////////////////////////////////////////////////////
+
+	arToolkitSource = new THREEx.ArToolkitSource({
+		// to read from the webcam 
+		sourceType : 'webcam',
+	
+	})
+
+	arToolkitSource.init(function onReady(){
+		onResize()
+	})
+	
+	// handle resize
+	window.addEventListener('resize', function(){
+		onResize()
+	})
+	function onResize(){
+		arToolkitSource.onResize()	
+		arToolkitSource.copySizeTo(renderer.domElement)	
+		if( arToolkitContext.arController !== null ){
+			arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)	
+		}	
+	}
+	////////////////////////////////////////////////////////////////////////////////
+	//          initialize arToolkitContext
+	////////////////////////////////////////////////////////////////////////////////
+	
+	arToolkitContext = new THREEx.ArToolkitContext({
+		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../data/data/camera_para.dat',
+		detectionMode: 'mono',
+		maxDetectionRate: 30,
+		canvasWidth: 80*3,
+		canvasHeight: 60*3,
+	})
+	// initialize it
+	arToolkitContext.init(function onCompleted(){
+		// copy projection matrix to camera
+		camera.projectionMatrix.copy( arToolkitContext.getProjectionMatrix() );
+	})
+
+	markerKanji = addMarkerKanji();
+	scene.add (markerKanji);
+	markerHiro = addMarkerHiro();
+	scene.add (markerHiro); 
+	
+	stats = new Stats();
+	document.body.appendChild( stats.dom );
+
+}
+
+	
+function addMarkerHiro(){
+
+	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootHiro, {
+		type : 'pattern',
+		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
+	})
+	
+	
+	/*if(options.start == true){
+		setInterval(makeTB, 1050);
+		
+	}*/
+	//makeTB();
+	
+	var light = new THREE.PointLight(0xffffff, 10, 100);
+	markerRootHiro.add(light, options.startPoint, options.endPoint);	
+	light.position.set(0.5, 0.8, 0);
+	options.endPoint.visible = false;
+	
+	return markerRootHiro;
+}
+
+/*function play(){
+	setInterval(makeTB, 1050);
+	//playAudio();
+}*/
+
+	
+function addMarkerKanji () {
+	let markerRootKanji = new THREE.Group();
+	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootKanji, {
+		type : 'pattern',
+		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji'
+	})
+	
+	catcher = new Catcher(); 
+	
+	markerRootKanji.add(catcher.catcher);
+	
+	return markerRootKanji;
+}
+
+function play(){
+	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
+	let toplay = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	
+	console.log(start)
+	if(start === 0 && options.start === false && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
+		options.start = true;														/*options.startPoint.position.*/
+		var s = setInterval(makeTB, 1050);
+		start = 1;
+		options.startPoint.visible = false;
+		options.endPoint.visible = true;
+	}
+	/*if(start === 0 && options.start === true && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
+		options.start = false;
+		start = 1;
+		options.endPoint.visible = false;
+		options.startPoint.visible = true;
+		console.log(222)
+	}*/
+}
+
+function catchB(target){
+	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
+	let tocatcher = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+
+	if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
+		target.boom = true;
+		getScore(options);
+	}
+}
+
+
+function makeTB(){
+	let bubble = new TempoBubble();
+	markerRootHiro.add(bubble.bubble);
+	B.push(bubble);
+	
+	makeBX(B[Mtimes].bubble, B[Mtimes].whichcolor);
+	Mtimes++;
+}	
+function makeBX(bubble, whichcolor){
+	
+	let box = new Boxs(bubble, whichcolor);
+	BX.push(box);
+	box.Box.visible = false;
+}
+
+
+function power(n){
+	return (n)*(n);
+}
+
+function turn(){
+	start = 0;
+}
+
+function update() {
+	
+	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
+}
+
+
+
+function animate() {
+
+	requestAnimationFrame (animate);
+	
+	if( arToolkitSource.ready === false )	return
+		arToolkitContext.update( arToolkitSource.domElement )
+
+	/*if(options.start === true){
+		play();
+	}*/
+	
+	if(start === 1)
+		setTimeout("turn()", 3000);
+	if(start === 0)
+		play();
+		
+	if(options.start === true && start === 0){
+		
+		
+		for(;;){
+			if(B[i] == undefined){
+				i = 0;
+				break;
+			}
+			
+			
+			if(B[i].bubble.visible === true){
+				//旋轉/////////////////////////////////
+				angle += 0.03;
+		
+				B[i].bubble.rotation.x = angle;
+				B[i].bubble.rotation.y = angle;
+		
+				//變大
+				if(B[i].bubble.scale.x < 5){
+					
+					B[i].sc += 0.03;
+					B[i].bubble.scale.set(B[i].sc, B[i].sc, B[i].sc);
+			
+					if(B[i].bubble.scale.x > 4 && B[i].bubble.scale.x < 5){
+						catchB(B[i]);
+						B[i].bubble.material.color.setHSL(0, 1, 0.5);
+					}
+				}
+				else if(B[i].bubble.scale.x >= 5 ){
+					B[i].bubble.visible = false;
+					markerRootHiro.remove(B[i].bubble);
+				}
+			}
+			//爆破
+			if(B[i].boom == true){
+				//泡泡本體要消失
+				B[i].bubble.visible = false;
+				markerRootHiro.remove(B[i].bubble);
+				
+				B[i].sc -= 0.15;
+				BX[i].Box.visible = true;
+				explode(angle*5, B[i].sc, BX[i].Box);
+				
+				if(BX[i].Box.children[0].material.opacity <= 0){
+					BX[i].Box.visible = false;
+					markerRootHiro.remove(BX[i].Box);
+				}
+			}
+			
+			i++;
+		}
+	}
+	
+		
+	renderer.render (scene, camera);
+	stats.update(); 
+
+	let msg ='';
+	
+	if (markerHiro.visible === true) {
+		msg += ' Hiro '
+
+	}
+	if (markerKanji.visible === true) {
+		msg += ' Kanji';
+
+	}<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<!-- three.js library -->
+<script src='../../examples/vendor/three.js/build/three.min.js'></script>
+<script src="../../examples/vendor/three.js/examples/js/libs/stats.min.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<!-- ar.js -->
+<script src="../../build/ar.js"></script>
+<script>THREEx.ArToolkitContext.baseURL = '../../'</script>
+
+<body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
+<div style='font-size:2em;position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
+	<a href="https://github.com/jeromeetienne/AR.js/" target="_blank">AR.js</a> - three.js
+	<br/>
+	Initialize both markers, but show them in controlled fashion
+	<p style='color:yellow' id='printDis'></p>
+</div>
+
+<!--style>
+	video {
+		-webkit-transform: scaleX(-1);
+		transform: scaleX(-1);
+	}
+</style-->
+
+<script src="Catcher.js"></script>
+<script src="TempoBubble.js"></script> 
+<script src="Boxs.js"></script>
+<script src="Options.js"></script>
+
+<script>
+
+// global variables
+var renderer, scene, camera;
+var stats;
+var markerKanji, markerHiro;
+var arToolKitSource, arToolKitContext;
+
+var _iOSDevice;
+var boxPos = new THREE.Vector3(), toKanji;
+var markerRootHiro = new THREE.Group();
+///////////////////////////////////////////
+
+
+var scale = 0, angle = 0;
+var options = new Options();
+var B = [], BX = [], box, bubble, catcher;
+var i = 0, start = 0, Mtimes = 0;
+
+
+init();
+animate();
+
+function playAudio() {
+　const audio = document.createElement("audio");
+　audio.src = "Zoom.mp3";
+　audio.play();
+}
+//playAudio();
+
+
+function init() {
+	// https://stackoverflow.com/questions/9038625/detect-if-device-is-ios?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+	let _iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
+
+	console.log ('iOS: ' + _iOSDevice)
+
+
+	// init renderer
+	renderer	= new THREE.WebGLRenderer({
+		// antialias	: true,
+		alpha: true
+	});
+	renderer.setClearColor(new THREE.Color('lightgrey'), 0);
+	// renderer.setPixelRatio( 1/2 );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.domElement.style.position = 'absolute';
+	renderer.domElement.style.top = '0px';
+	renderer.domElement.style.left = '0px';
+	document.body.appendChild( renderer.domElement );
+
+	// init scene and camera
+	scene	= new THREE.Scene();
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		Initialize a basic camera
+	////////////////////////////////////////////////////////////////////////////////// 
+
+	// Create a camera
+	camera = new THREE.Camera();
+	scene.add(camera);
+
+	////////////////////////////////////////////////////////////////////////////////
+	//          handle arToolkitSource
+	////////////////////////////////////////////////////////////////////////////////
+
+	arToolkitSource = new THREEx.ArToolkitSource({
+		// to read from the webcam 
+		sourceType : 'webcam',
+	
+	})
+
+	arToolkitSource.init(function onReady(){
+		onResize()
+	})
+	
+	// handle resize
+	window.addEventListener('resize', function(){
+		onResize()
+	})
+	function onResize(){
+		arToolkitSource.onResize()	
+		arToolkitSource.copySizeTo(renderer.domElement)	
+		if( arToolkitContext.arController !== null ){
+			arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)	
+		}	
+	}
+	////////////////////////////////////////////////////////////////////////////////
+	//          initialize arToolkitContext
+	////////////////////////////////////////////////////////////////////////////////
+	
+	arToolkitContext = new THREEx.ArToolkitContext({
+		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../data/data/camera_para.dat',
+		detectionMode: 'mono',
+		maxDetectionRate: 30,
+		canvasWidth: 80*3,
+		canvasHeight: 60*3,
+	})
+	// initialize it
+	arToolkitContext.init(function onCompleted(){
+		// copy projection matrix to camera
+		camera.projectionMatrix.copy( arToolkitContext.getProjectionMatrix() );
+	})
+
+	markerKanji = addMarkerKanji();
+	scene.add (markerKanji);
+	markerHiro = addMarkerHiro();
+	scene.add (markerHiro); 
+	
+	stats = new Stats();
+	document.body.appendChild( stats.dom );
+
+}
+
+	
+function addMarkerHiro(){
+
+	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootHiro, {
+		type : 'pattern',
+		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
+	})
+
+	
+	var light = new THREE.PointLight(0xffffff, 10, 100);
+	markerRootHiro.add(light, options.startPoint, options.endPoint);	
+	light.position.set(0.5, 0.8, 0);
+	options.endPoint.visible = false;
+	
+	return markerRootHiro;
+}
+
+/*function play(){
+	setInterval(makeTB, 1050);
+	//playAudio();
+}*/
+
+	
+function addMarkerKanji () {
+	let markerRootKanji = new THREE.Group();
+	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootKanji, {
+		type : 'pattern',
+		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji'
+	})
+	
+	catcher = new Catcher(); 
+	
+	markerRootKanji.add(catcher.catcher);
+	
+	return markerRootKanji;
+}
+
+function play(){
+	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
+	let toplay = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	
+	if(start === 0 && options.start === false && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
+		options.start = true;														
+		setTimeout("makeTB(5000)", 1050);
+		start = 1;
+		options.startPoint.visible = false;
+		options.endPoint.visible = true;
+	}
+	if(start === 0 && options.start === true && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
+		options.start = false;
+		start = 1;
+		options.endPoint.visible = false;
+		options.startPoint.visible = true;
+	}
+}
+
+
+function catchB(target){
+	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
+	let tocatcher = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+
+	if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
+		target.boom = true;
+		getScore(options);
+	}
+}
+
+
+function makeTB(x){
+	if(options.start === false){
+		options.remain = (options.count*1000)/60;
+	}
+	else{
+		let bubble = new TempoBubble();
+		markerRootHiro.add(bubble.bubble);
+		B.push(bubble);
+		
+		makeBX(B[Mtimes].bubble, B[Mtimes].whichcolor);
+		Mtimes++;
+		
+		
+		setTimeout("makeTB(10000)", x);
+	}
+}	
+function makeBX(bubble, whichcolor){
+	
+	let box = new Boxs(bubble, whichcolor);
+	BX.push(box);
+	box.Box.visible = false;
+}
+
+
+function power(n){
+	return (n)*(n);
+}
+
+function update() {
+	
+	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
+}
+
+//泡泡的setTimeout運算暫停時間
+function animate() {
+
+	requestAnimationFrame (animate);
+	
+	if( arToolkitSource.ready === false )	return
+		arToolkitContext.update( arToolkitSource.domElement )
+	
+	if(start === 1){
+		setTimeout(() => start = 0, 2000)
+	}
+	else{
+		play();		
+		options.count++;
+		if(options.count > 60)
+			options.count = 0;
+	}
+	
+	if(options.start === true)	
+		for(;;){
+			if(B[i] == undefined){
+				i = 0;
+				break;
+			}
+			
+			
+			if(B[i].bubble.visible === true){
+				//旋轉/////////////////////////////////
+				angle += 0.03;
+		
+				B[i].bubble.rotation.x = angle;
+				B[i].bubble.rotation.y = angle;
+		
+				//變大
+				if(B[i].bubble.scale.x < 5){
+					
+					B[i].sc += 0.03;
+					B[i].bubble.scale.set(B[i].sc, B[i].sc, B[i].sc);
+			
+					if(B[i].bubble.scale.x > 4 && B[i].bubble.scale.x < 5){
+						catchB(B[i]);
+						B[i].bubble.material.color.setHSL(0, 1, 0.5);
+					}
+				}
+				else if(B[i].bubble.scale.x >= 5 ){
+					B[i].bubble.visible = false;
+					markerRootHiro.remove(B[i].bubble);
+				}
+			}
+			//爆破
+			if(B[i].boom == true){
+				//泡泡本體要消失
+				B[i].bubble.visible = false;
+				markerRootHiro.remove(B[i].bubble);
+				
+				B[i].sc -= 0.15;
+				BX[i].Box.visible = true;
+				explode(angle*5, B[i].sc, BX[i].Box);
+				
+				if(BX[i].Box.children[0].material.opacity <= 0){
+					BX[i].Box.visible = false;
+					markerRootHiro.remove(BX[i].Box);
+				}
+			}
+			
+			i++;
+		}
+	else{
+		
+	}
+	
+		
+	renderer.render (scene, camera);
+	stats.update(); 
+
+	let msg ='';
+	
+	if (markerHiro.visible === true) {
+		msg += ' Hiro '
+
+	}
+	if (markerKanji.visible === true) {
+		msg += ' Kanji';
+
+	}
+	update();
+	
+	$('#printDis').text (msg)
+	
+}
+
+window.focus();
+
+</script></body>
+
+	update();
+	
+	$('#printDis').text (msg)
+	
+}
+
+window.focus();
+
+</script></body>
