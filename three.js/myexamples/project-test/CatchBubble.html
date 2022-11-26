@@ -52,11 +52,7 @@ var i = 0, start = 0, Mtimes = 0;
 init();
 animate();
 
-function playAudio() {
-　const audio = document.createElement("audio");
-　audio.src = "Zoom.mp3";
-　audio.play();
-}
+
 //playAudio();
 
 
@@ -189,52 +185,82 @@ function addMarkerletterA () {
 }
 
 function play(){
+
 	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
 	let toplay = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
 	let tostop = markerHiro.worldToLocal(markerletterA.localToWorld(new THREE.Vector3(0, 0, 0)));
 	
-	//開始
-	if(options.start === false && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
-		options.start = true;				
-		options.play = true;
-		setTimeout("makeTB(3000)", 1050);
-		options.startPoint.visible = false;
-		options.endPoint.visible = true;
-	}
-	//繼續
-	if(options.start === true && options.play === false && power(-2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
-		options.play = true;
-		options.pause = false;
-		options.conPoint.visible = false;
-		options.pausePoint.visible = true;
+	if(markerKanji.visible === true){	
+		//開始
+		if(options.start === false && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
+			effect(options.sound);
+			
+			options.start = true;				
+			options.play = true;
+			options.interval = 10000;
+			setTimeout("makeTB(options.interval)", 1050);
+			options.startPoint.visible = false;
+			options.endPoint.visible = true;
+			
+			console.log(1);
+		}
+		//繼續
+		if(options.start === true && options.play === false && power(-2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
+			effect(options.sound);
+			
+			//暫停時泡泡的interval進行到哪個階段，然後接下去
+			options.count /= (3/50);
+			options.count %= options.interval;
+			console.log(options.count);
+			console.log(options.interval - options.count );
+			setTimeout("makeTB(options.interval)", options.interval - options.count);//多久要呼叫下一個泡泡
+			options.count = 0;		//歸零，等待下一次暫停
+			
+			options.play = true;
+			options.pause = false;
+			options.conPoint.visible = false;
+			options.pausePoint.visible = true;
+			
+			console.log(2);
+		}
 	}
 	
-	//結束
-	if(options.start === true && power(2.5 - tostop.x) + power(0 - tostop.z) <= 0.5){
-		options.start = false;
-		options.play = false;
-		options.endPoint.visible = false;
-		options.startPoint.visible = true;
-		console.log(999);
-	}
-	//暫停
-	if(options.start === true && options.play === true && power(-2.5 - tostop.x) + power(0 - tostop.z) <= 0.5){
-		options.play = false;
-		options.pause = true;
-		options.pausePoint.visible = false;
-		options.conPoint.visible = true;
-		console.log(666);
+	if(markerletterA.visible === true){
+		//結束
+		if(options.start === true && power(2.5 - tostop.x) + power(0 - tostop.z) <= 0.5){
+			effect(options.sound);
+			
+			options.start = false;
+			options.play = false;
+			options.endPoint.visible = false;
+			options.startPoint.visible = true;
+			
+			console.log(3);
+		}
+		//暫停
+		if(options.start === true && options.play === true && power(-2.5 - tostop.x) + power(0 - tostop.z) <= 0.5){
+			effect(options.sound);
+			
+			options.play = false;
+			options.pause = true;
+			options.pausePoint.visible = false;
+			options.conPoint.visible = true;
+			
+			console.log(4);
+		}
 	}
 }
 
 
 function catchB(target){
-	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
-	let tocatcher = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	if(markerKanji.visible === true){
+		markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
+		let tocatcher = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
 
-	if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
-		target.boom = true;
-		getScore(options);
+		if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
+			target.boom = true;
+			getScore(options);
+		}
 	}
 }
 
@@ -250,8 +276,9 @@ function makeTB(x){
 		Mtimes++;
 			
 			
-		setTimeout("makeTB(3000)", x);
-	}
+		setTimeout("makeTB(options.interval)", x);
+	}	
+		
 }	
 function makeBX(bubble, whichcolor){
 	
@@ -270,7 +297,6 @@ function update() {
 	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
 }
 
-//泡泡的setTimeout運算暫停時間
 function animate() {
 
 	requestAnimationFrame (animate);
@@ -278,13 +304,12 @@ function animate() {
 	if( arToolkitSource.ready === false )	return
 		arToolkitContext.update( arToolkitSource.domElement )
 	
-	/*if(start === 1){
-		setTimeout(() => start = 0, 2000)
-	}*/
 	
 	play();
 	
-	if(options.start === true && options.)	
+	if(options.start === true && options.play === true){ //1count = 1/60秒 , setTimeout: 1 = 1/1000秒
+		options.count++;								 //1c : 1/60 = X : 1/1000 >>> X = 3/50			
+		
 		for(;;){
 			if(B[i] == undefined){
 				i = 0;
@@ -333,8 +358,9 @@ function animate() {
 			
 			i++;
 		}
-	else{
-		
+	} 
+	else if(options.start === false){
+		//popbubble(B, BX);
 	}
 	
 		

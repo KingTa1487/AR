@@ -3,7 +3,13 @@ class Options{
 		this.start = false, this.play = false;
 		this.score = 0;
 		this.count = 0;
-		this.remain = 0;
+		this.interval = 0;
+		
+		//音樂
+		this.audio = document.createElement("audio");
+		this.audio.src = "Jay Jay.mp3";
+		this.sound = document.createElement("audio");
+		this.sound.src = "b3.wav";
 		
 		let loader = new THREE.TextureLoader();
 		loader.crossOrigin = '';
@@ -53,10 +59,30 @@ class Options{
 	}
 	
 	
+	
 }
 
 function getScore(options){
 	options.score++;
 	
 	return options.score;
+}
+
+function playAudio() {
+　	//const audio = document.createElement("audio");
+　	//audio.src = "Jay Jay.mp3";
+　	audio.play();
+}
+
+function effect(sound){
+	//const sound = document.createElement("audio");
+　	//sound.src = "b3.wav";
+　	sound.play();
+}
+
+function popbubble(){
+	while(B && BX){
+		B.pop();
+		BX.pop();
+	}
 }
