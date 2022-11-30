@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+<head>
+	<link rel="shortcut icon" href="#">
+</head>
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <!-- three.js library -->
 <script src='../../examples/vendor/three.js/build/three.min.js'></script>
@@ -10,13 +13,14 @@
 <script>THREEx.ArToolkitContext.baseURL = '../../'</script>
 
 <body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
-<div style='font-size:2em;position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
+<!--div style='font-size:2em;position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
 	<a href="https://github.com/jeromeetienne/AR.js/" target="_blank">AR.js</a> - three.js
 	<br/>
 	Initialize both markers, but show them in controlled fashion
 	<p style='color:yellow' id='printDis'></p>
-</div>
+</div-->
 
+<audio src="Jay Jay.mp3" id='bgmusic' autoplay loop></audio>
 <!--style>
 	video {
 		-webkit-transform: scaleX(-1);
@@ -47,6 +51,7 @@ var scale = 0, angle = 0;
 var options = new Options();
 var B = [], BX = [], box, bubble, catcher = new Catcher(); ;
 var i = 0, start = 0, Mtimes = 0;
+var missPoint;
 
 
 init();
@@ -150,10 +155,12 @@ function addMarkerHiro(){
 
 	
 	var light = new THREE.PointLight(0xffffff, 10, 100);
-	markerRootHiro.add(light, options.startPoint, options.endPoint, options.conPoint, options.pausePoint);	
+	markerRootHiro.add(light, options.startPoint, options.endPoint, options.conPoint, options.pausePoint, options.restartPoint);	
 	light.position.set(0.5, 0.8, 0);
 	options.endPoint.visible = false;
 	options.conPoint.visible = false;
+	options.pausePoint.visible = false;
+	options.restartPoint.visible = false;
 	
 	return markerRootHiro;
 }
@@ -192,23 +199,25 @@ function play(){
 	
 	if(markerKanji.visible === true){	
 		//開始
-		if(options.start === false && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
-			effect(options.sound);
+		if(options.start === false && Math.abs(options.startPoint.position.x - toplay.x) <=2 && Math.abs(options.startPoint.position.z - toplay.z) <= 0.6){
+			effect();					//點擊音效
+			bgmusic.pause();			//背景音樂
+			gamemusic(options.music);	//遊戲音樂
 			
 			options.start = true;				
 			options.play = true;
-			options.interval = 10000;
-			setTimeout("makeTB(options.interval)", 1050);
+			options.interval = 1000;
+			setTimeout("makeTB(options.interval)", 5000);
 			options.startPoint.visible = false;
-			options.endPoint.visible = true;
-			
-			console.log(1);
+			//options.endPoint.visible = true;
+			options.pausePoint.visible = true;
 		}
 		//繼續
-		if(options.start === true && options.play === false && power(-2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
-			effect(options.sound);
+		if(options.start === true && options.play === false && power(options.conPoint.position.x - toplay.x) + power(options.conPoint.position.z - toplay.z) <= 0.6){
+			effect();
+			options.music.play();
 			
-			//暫停時泡泡的interval進行到哪個階段，然後接下去
+			//※暫停時泡泡的interval進行到哪個階段，然後接下去
 			options.count /= (3/50);
 			options.count %= options.interval;
 			console.log(options.count);
@@ -217,36 +226,66 @@ function play(){
 			options.count = 0;		//歸零，等待下一次暫停
 			
 			options.play = true;
-			options.pause = false;
+			
 			options.conPoint.visible = false;
+			options.endPoint.visible = false;
+			options.restartPoint.visible = false;
 			options.pausePoint.visible = true;
 			
-			console.log(2);
+			
 		}
 	}
 	
 	if(markerletterA.visible === true){
 		//結束
-		if(options.start === true && power(2.5 - tostop.x) + power(0 - tostop.z) <= 0.5){
-			effect(options.sound);
+		if(options.start === true && power(options.endPoint.position.x - tostop.x) + power(options.endPoint.position.z - tostop.z) <= 0.6){
+			effect();
+			bgmusic.play();
+			options.music.pause();
+			options.music.currentTime = 0;
+			options.score = 0;		/////
 			
 			options.start = false;
 			options.play = false;
+			
 			options.endPoint.visible = false;
 			options.startPoint.visible = true;
+			options.conPoint.visible = false;
+			options.pausePoint.visible = false;
+			options.restartPoint.visible = false;
 			
-			console.log(3);
 		}
 		//暫停
-		if(options.start === true && options.play === true && power(-2.5 - tostop.x) + power(0 - tostop.z) <= 0.5){
-			effect(options.sound);
+		if(options.start === true && options.play === true && power(options.pausePoint.position.x - tostop.x) + power(options.pausePoint.position.z - tostop.z) <= 0.6){
+			effect();
+			options.music.pause();
 			
 			options.play = false;
-			options.pause = true;
-			options.pausePoint.visible = false;
-			options.conPoint.visible = true;
 			
-			console.log(4);
+			options.endPoint.visible = true;
+			options.conPoint.visible = true;
+			options.restartPoint.visible = true;
+			options.pausePoint.visible = false;
+		}
+		//重來
+		if(options.start === true && options.play === false && power(options.restartPoint.position.x - tostop.x) + power(options.restartPoint.position.z - tostop.z) <= 0.6){
+			effect();
+			options.music.pause();
+			options.music.currentTime = 0;
+			options.music.play();
+			options.score = 0;		/////
+			
+			popbubble(B, BX, Mtimes-1);
+			Mtimes = 0;
+			
+			options.play = true;
+			
+			setTimeout("makeTB(options.interval)", 5000);
+			options.endPoint.visible = false;
+			options.conPoint.visible = false;
+			options.restartPoint.visible = false;
+			options.pausePoint.visible = true;
+			
 		}
 	}
 }
@@ -259,6 +298,7 @@ function catchB(target){
 
 		if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
 			target.boom = true;
+			hit();
 			getScore(options);
 		}
 	}
@@ -298,6 +338,7 @@ function update() {
 }
 
 function animate() {
+	
 
 	requestAnimationFrame (animate);
 	
@@ -337,7 +378,10 @@ function animate() {
 				}
 				else if(B[i].bubble.scale.x >= 5 ){
 					B[i].bubble.visible = false;
+					
+					miss(B[i].bubble);
 					markerRootHiro.remove(B[i].bubble);
+					
 				}
 			}
 			//爆破
@@ -350,17 +394,19 @@ function animate() {
 				BX[i].Box.visible = true;
 				explode(angle*5, B[i].sc, BX[i].Box);
 				
-				if(BX[i].Box.children[0].material.opacity <= 0){
+				if(BX[i].Box.children[0].material.opacity <= 0){ //opacity 透明度
 					BX[i].Box.visible = false;
-					markerRootHiro.remove(BX[i].Box);
+					markerRootHiro.remove(BX[i].Box);	
 				}
 			}
 			
 			i++;
 		}
-	} 
-	else if(options.start === false){
-		//popbubble(B, BX);
+	} 								   //已有泡泡
+	else if(options.start === false && B != 0){
+		Mtimes -= 1;
+		popbubble(B, BX, Mtimes);
+		Mtimes = 0;
 	}
 	
 		

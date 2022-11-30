@@ -81,3 +81,28 @@ function explode(angle, scale, box){
 				count++;
 			}
 }
+
+function miss(bubble){
+	
+	let loader = new THREE.TextureLoader();
+	loader.crossOrigin = '';
+	//miss
+	let miss = loader.load('miss.png');
+	let missmap = new THREE.MeshBasicMaterial({
+		map:miss,
+		side:THREE.DoubleSide,
+		transparent:true
+	});
+	
+	missPoint = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.7), missmap);
+	missPoint.rotation.x = -Math.PI/2;
+	missPoint.position.copy(bubble.position);
+	
+	markerRootHiro.add(missPoint);
+	setTimeout("d(missPoint)", 500);
+	
+	return;
+} 	
+function d(m){
+	markerRootHiro.remove(m);
+}

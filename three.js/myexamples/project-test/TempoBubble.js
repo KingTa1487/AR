@@ -9,14 +9,14 @@ class TempoBubble{
 	}
 }
 
-
 function P(bubble){
 	let X = Math.floor(Math.random()*10000);
 	
 	if(X%2 == 1){
-		bubble.position.set(-Math.random()*2 + 1, 0.2, Math.random()*3 + 1.5);
+		bubble.position.set(-Math.random()*3 + 1, 0, Math.random()*3 + 5);
 	}
 	else
-		bubble.position.set(Math.random()*2 + 1, 0.2, Math.random()*3 + 1.5);
+		bubble.position.set(Math.random()*3 + 1, 0, Math.random()*3 + 5);
 	
 }
+
