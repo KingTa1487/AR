@@ -32,7 +32,7 @@
 <script src="TempoBubble.js"></script> 
 <script src="Boxs.js"></script>
 <script src="Options.js"></script>
-
+<script src="Scores.js"></script>
 <script>
 
 // global variables
@@ -52,6 +52,8 @@ var options = new Options();
 var B = [], BX = [], box, bubble, catcher = new Catcher(); ;
 var i = 0, start = 0, Mtimes = 0;
 var missPoint;
+var scoreGroup = [];
+var points = 0, digits = 0;
 
 
 init();
@@ -156,6 +158,13 @@ function addMarkerHiro(){
 	
 	var light = new THREE.PointLight(0xffffff, 10, 100);
 	markerRootHiro.add(light, options.startPoint, options.endPoint, options.conPoint, options.pausePoint, options.restartPoint);	
+	
+	for (var i=0; i<5; i++) {
+		scoreGroup.push(new Scores(i));
+		markerRootHiro.add(scoreGroup[i].scorePoint); 
+	}
+ 
+	
 	light.position.set(0.5, 0.8, 0);
 	options.endPoint.visible = false;
 	options.conPoint.visible = false;
@@ -299,7 +308,19 @@ function catchB(target){
 		if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
 			target.boom = true;
 			hit();
-			getScore(options);
+			
+			points += 135;
+			var tmp = points;
+		    while (tmp !== 0){
+				scoreGroup[digits].carrys(tmp % 10);
+				tmp = Math.floor(tmp / 10);
+				if (tmp === 0) 
+					break;
+				if (digits < scoreGroup.length-1) 
+					digits++;
+		    }
+		    digits = 0;
+			//getScore(options);
 		}
 	}
 }

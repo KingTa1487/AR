@@ -72,11 +72,11 @@ class Options{
 	
 }
 
-function getScore(options){
+/*function getScore(options){
 	options.score++;
 	
 	return options.score;
-}
+}*/
 
 function gamemusic(music) {
 　	music.play();
