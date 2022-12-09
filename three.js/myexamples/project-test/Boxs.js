@@ -94,15 +94,15 @@ function miss(bubble){
 		transparent:true
 	});
 	
-	missPoint = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.7), missmap);
+	missPoint = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1), missmap);
 	missPoint.rotation.x = -Math.PI/2;
 	missPoint.position.copy(bubble.position);
 	
 	markerRootHiro.add(missPoint);
 	setTimeout("d(missPoint)", 500);
 	
-	return;
 } 	
 function d(m){
+	m.visible = false;	
 	markerRootHiro.remove(m);
 }

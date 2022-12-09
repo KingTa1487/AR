@@ -21,6 +21,8 @@
 </div-->
 
 <audio src="Jay Jay.mp3" id='bgmusic' autoplay loop></audio>
+<audio src="Zoom.mp3" id='boardmusic' autoplay loop></audio>
+<audio src="tambourine-hit-2.mp3" id='hit'></audio>
 <!--style>
 	video {
 		-webkit-transform: scaleX(-1);
@@ -33,8 +35,9 @@
 <script src="Boxs.js"></script>
 <script src="Options.js"></script>
 <script src="Scores.js"></script>
-<script>
+<script src="Progress_bar.js"></script>
 
+<script>
 // global variables
 var renderer, scene, camera;
 var stats;
@@ -48,10 +51,11 @@ var markerRootHiro = new THREE.Group();
 
 
 var scale = 0, angle = 0;
-var options = new Options();
-var B = [], BX = [], box, bubble, catcher = new Catcher(); ;
+var options = new Options(), progressbar = new Progress_bar();
+var B = [], BX = [], box, bubble, catcher = new Catcher();
 var i = 0, start = 0, Mtimes = 0;
 var missPoint;
+/////
 var scoreGroup = [];
 var points = 0, digits = 0;
 
@@ -60,7 +64,9 @@ init();
 animate();
 
 
-//playAudio();
+boardmusic.pause();
+hit.preload;
+
 
 
 function init() {
@@ -155,10 +161,10 @@ function addMarkerHiro(){
 		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
 	})
 
-	
 	var light = new THREE.PointLight(0xffffff, 10, 100);
-	markerRootHiro.add(light, options.startPoint, options.endPoint, options.conPoint, options.pausePoint, options.restartPoint);	
 	
+	markerRootHiro.add(light, options.startPoint, options.endPoint, options.conPoint, options.pausePoint, 
+						options.restartPoint, options.confirm_Point, progressbar.pbar, options.rankPoint);
 	for (var i=0; i<5; i++) {
 		scoreGroup.push(new Scores(i));
 		markerRootHiro.add(scoreGroup[i].scorePoint); 
@@ -170,6 +176,8 @@ function addMarkerHiro(){
 	options.conPoint.visible = false;
 	options.pausePoint.visible = false;
 	options.restartPoint.visible = false;
+	options.confirm_Point.visible = false;
+	options.rankPoint.visible = false;
 	
 	return markerRootHiro;
 }
@@ -184,7 +192,6 @@ function addMarkerKanji () {
 	catcher = new Catcher(); 
 	
 	markerRootKanji.add(catcher.catcher);
-	
 	return markerRootKanji;
 }
 
@@ -206,41 +213,75 @@ function play(){
 	let toplay = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
 	let tostop = markerHiro.worldToLocal(markerletterA.localToWorld(new THREE.Vector3(0, 0, 0)));
 	
+	//確認
+	if(options.music.ended === true){
+		boardmusic.play();
+		options.pausePoint.visible = false;
+		options.confirm_Point.visible = true;
+		options.rankPoint.visible = true;
+		
+		/////
+		for (var i=0; i<5; i++) {		///分數欄位置至中
+			scoreGroup[i].scorePoint.position.set(1.5-(i * .9), 1, 5);
+		}
+		rankSet (points);
+
+		if(markerletterA.visible === true && power(options.confirm_Point.position.x - tostop.x) + power(options.confirm_Point.position.z - tostop.z) <= 0.6){
+			options.effect();
+			boardmusic.pause();
+			bgmusic.play();
+			
+			options.start = false;
+			options.play = false;
+			
+			options.startPoint.visible = true;
+			options.confirm_Point.visible = false;
+			options.rankPoint.visible = false;
+			
+			options.music.currentTime = 0;		
+
+			//////
+			points = 0;
+			clear(scoreGroup);
+			for (var i=0; i<5; i++) {		///分數欄位置回歸
+				scoreGroup[i].scorePoint.position.set(-1.5-(i * .9), 1, 0);
+			}
+		}
+	}
+	
 	if(markerKanji.visible === true){	
 		//開始
 		if(options.start === false && Math.abs(options.startPoint.position.x - toplay.x) <=2 && Math.abs(options.startPoint.position.z - toplay.z) <= 0.6){
-			effect();					//點擊音效
+			options.effect();					//點擊音效
 			bgmusic.pause();			//背景音樂
 			gamemusic(options.music);	//遊戲音樂
 			
 			options.start = true;				
 			options.play = true;
-			options.interval = 1000;
-			setTimeout("makeTB(options.interval)", 5000);
+			options.mbubble = true;		//製造泡泡
+			
+			options.interval = 850;	//70.5bpm		(60/70.5)*1000
+			setTimeout("makeTB(options.interval)", 4250);
 			options.startPoint.visible = false;
-			//options.endPoint.visible = true;
 			options.pausePoint.visible = true;
 		}
 		//繼續
 		if(options.start === true && options.play === false && power(options.conPoint.position.x - toplay.x) + power(options.conPoint.position.z - toplay.z) <= 0.6){
-			effect();
+			options.effect();
 			options.music.play();
 			
+			options.play = true;
+			options.mbubble = true;
 			//※暫停時泡泡的interval進行到哪個階段，然後接下去
 			options.count /= (3/50);
 			options.count %= options.interval;
-			console.log(options.count);
-			console.log(options.interval - options.count );
 			setTimeout("makeTB(options.interval)", options.interval - options.count);//多久要呼叫下一個泡泡
 			options.count = 0;		//歸零，等待下一次暫停
-			
-			options.play = true;
 			
 			options.conPoint.visible = false;
 			options.endPoint.visible = false;
 			options.restartPoint.visible = false;
 			options.pausePoint.visible = true;
-			
 			
 		}
 	}
@@ -248,28 +289,35 @@ function play(){
 	if(markerletterA.visible === true){
 		//結束
 		if(options.start === true && power(options.endPoint.position.x - tostop.x) + power(options.endPoint.position.z - tostop.z) <= 0.6){
-			effect();
+			options.effect();
 			bgmusic.play();
 			options.music.pause();
 			options.music.currentTime = 0;
-			options.score = 0;		/////
+			options.score = 0;		
 			
 			options.start = false;
 			options.play = false;
+			options.mbubble = false;
 			
-			options.endPoint.visible = false;
 			options.startPoint.visible = true;
+			options.endPoint.visible = false;
 			options.conPoint.visible = false;
 			options.pausePoint.visible = false;
 			options.restartPoint.visible = false;
+					
+					
+			///////		
+			points = 0;
+			clear(scoreGroup);
 			
 		}
 		//暫停
 		if(options.start === true && options.play === true && power(options.pausePoint.position.x - tostop.x) + power(options.pausePoint.position.z - tostop.z) <= 0.6){
-			effect();
+			options.effect();
 			options.music.pause();
 			
 			options.play = false;
+			options.mbubble = false;
 			
 			options.endPoint.visible = true;
 			options.conPoint.visible = true;
@@ -278,16 +326,17 @@ function play(){
 		}
 		//重來
 		if(options.start === true && options.play === false && power(options.restartPoint.position.x - tostop.x) + power(options.restartPoint.position.z - tostop.z) <= 0.6){
-			effect();
+			options.effect();
 			options.music.pause();
 			options.music.currentTime = 0;
 			options.music.play();
-			options.score = 0;		/////
+			options.score = 0;		
 			
 			popbubble(B, BX, Mtimes-1);
 			Mtimes = 0;
 			
 			options.play = true;
+			options.mbubble = true;
 			
 			setTimeout("makeTB(options.interval)", 5000);
 			options.endPoint.visible = false;
@@ -295,6 +344,9 @@ function play(){
 			options.restartPoint.visible = false;
 			options.pausePoint.visible = true;
 			
+			////////
+			points = 0;
+			clear(scoreGroup);
 		}
 	}
 }
@@ -307,8 +359,9 @@ function catchB(target){
 
 		if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
 			target.boom = true;
-			hit();
+			hit.play();
 			
+			////
 			points += 135;
 			var tmp = points;
 		    while (tmp !== 0){
@@ -320,7 +373,7 @@ function catchB(target){
 					digits++;
 		    }
 		    digits = 0;
-			//getScore(options);
+
 		}
 	}
 }
@@ -328,7 +381,7 @@ function catchB(target){
 
 function makeTB(x){
 	
-	if(options.play === true){
+	if(options.mbubble === true){
 		let bubble = new TempoBubble();
 		markerRootHiro.add(bubble.bubble);
 		B.push(bubble);
@@ -360,7 +413,7 @@ function update() {
 
 function animate() {
 	
-
+	
 	requestAnimationFrame (animate);
 	
 	if( arToolkitSource.ready === false )	return
@@ -368,17 +421,28 @@ function animate() {
 	
 	
 	play();
+
+	if(options.music.currentTime > 32)
+		options.mbubble = false;
 	
 	if(options.start === true && options.play === true){ //1count = 1/60秒 , setTimeout: 1 = 1/1000秒
 		options.count++;								 //1c : 1/60 = X : 1/1000 >>> X = 3/50			
 		
+		//進度條
+		progressbar.pbar.visible = true;
+		let progress = (options.music.currentTime/options.music.duration)*2*Math.PI;
+		progressbar.pbar.geometry.dispose();
+		progressbar.p = new THREE.RingGeometry(0.1, 1.5, 30, 3, -Math.PI/2, progress);
+		progressbar.pbar.geometry = progressbar.p;
+		
+		//泡泡
 		for(;;){
 			if(B[i] == undefined){
 				i = 0;
 				break;
 			}
-			
-			
+				
+			//console.log(options.music.currentTime/options.music.duration);
 			if(B[i].bubble.visible === true){
 				//旋轉/////////////////////////////////
 				angle += 0.03;
@@ -428,6 +492,8 @@ function animate() {
 		Mtimes -= 1;
 		popbubble(B, BX, Mtimes);
 		Mtimes = 0;
+		
+		progressbar.pbar.visible = false;
 	}
 	
 		

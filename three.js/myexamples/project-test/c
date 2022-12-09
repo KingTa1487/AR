@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+<head>
+	<link rel="shortcut icon" href="#">
+</head>
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <!-- three.js library -->
 <script src='../../examples/vendor/three.js/build/three.min.js'></script>
@@ -10,13 +13,16 @@
 <script>THREEx.ArToolkitContext.baseURL = '../../'</script>
 
 <body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
-<div style='font-size:2em;position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
+<!--div style='font-size:2em;position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
 	<a href="https://github.com/jeromeetienne/AR.js/" target="_blank">AR.js</a> - three.js
 	<br/>
 	Initialize both markers, but show them in controlled fashion
 	<p style='color:yellow' id='printDis'></p>
-</div>
+</div-->
 
+<audio src="Jay Jay.mp3" id='bgmusic' autoplay loop></audio>
+<audio src="Zoom.mp3" id='boardmusic' autoplay loop></audio>
+<audio src="tambourine-hit-2.mp3" id='hit'></audio>
 <!--style>
 	video {
 		-webkit-transform: scaleX(-1);
@@ -28,36 +34,39 @@
 <script src="TempoBubble.js"></script> 
 <script src="Boxs.js"></script>
 <script src="Options.js"></script>
+<script src="Scores.js"></script>
+<script src="Progress_bar.js"></script>
 
 <script>
-
 // global variables
 var renderer, scene, camera;
 var stats;
-var markerKanji, markerHiro;
+var markerKanji, markerHiro, markerletterA;
 var arToolKitSource, arToolKitContext;
 
 var _iOSDevice;
-var boxPos = new THREE.Vector3(), toKanji;
+var boxPos = new THREE.Vector3(), toKanji, toletterA;
 var markerRootHiro = new THREE.Group();
 ///////////////////////////////////////////
 
 
 var scale = 0, angle = 0;
-var options = new Options();
-var B = [], BX = [], box, bubble, catcher;
+var options = new Options(), progressbar = new Progress_bar();
+var B = [], BX = [], box, bubble, catcher = new Catcher();
 var i = 0, start = 0, Mtimes = 0;
+var missPoint;
+/////
+var scoreGroup = [];
+var points = 0, digits = 0;
 
 
 init();
 animate();
 
-function playAudio() {
-　const audio = document.createElement("audio");
-　audio.src = "Zoom.mp3";
-　audio.play();
-}
-//playAudio();
+
+boardmusic.pause();
+hit.preload;
+
 
 
 function init() {
@@ -137,428 +146,235 @@ function init() {
 	scene.add (markerKanji);
 	markerHiro = addMarkerHiro();
 	scene.add (markerHiro); 
+	markerletterA = addMarkerletterA();
+	scene.add (markerletterA); 
 	
 	stats = new Stats();
 	document.body.appendChild( stats.dom );
 
 }
 
-	
 function addMarkerHiro(){
 
 	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootHiro, {
 		type : 'pattern',
 		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
 	})
-	
-	
-	/*if(options.start == true){
-		setInterval(makeTB, 1050);
-		
-	}*/
-	//makeTB();
-	
+
 	var light = new THREE.PointLight(0xffffff, 10, 100);
-	markerRootHiro.add(light, options.startPoint, options.endPoint);	
+	
+	markerRootHiro.add(light, options.startPoint, options.endPoint, options.conPoint, 
+						options.pausePoint, options.restartPoint, options.confirm_Point, progressbar.pbar);
+	for (var i=0; i<5; i++) {
+		scoreGroup.push(new Scores(i));
+		markerRootHiro.add(scoreGroup[i].scorePoint); 
+	}
+ 
+	
 	light.position.set(0.5, 0.8, 0);
 	options.endPoint.visible = false;
+	options.conPoint.visible = false;
+	options.pausePoint.visible = false;
+	options.restartPoint.visible = false;
+	options.confirm_Point.visible = false;
 	
 	return markerRootHiro;
 }
-
-/*function play(){
-	setInterval(makeTB, 1050);
-	//playAudio();
-}*/
-
 	
 function addMarkerKanji () {
 	let markerRootKanji = new THREE.Group();
 	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootKanji, {
 		type : 'pattern',
-		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji'
+		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/kanji.patt'
 	})
 	
 	catcher = new Catcher(); 
 	
 	markerRootKanji.add(catcher.catcher);
-	
 	return markerRootKanji;
 }
 
+function addMarkerletterA () {
+	let markerRootletterA = new THREE.Group();
+	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootletterA, {
+		type : 'pattern',
+		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/letterA.patt'
+	})
+	
+	markerRootletterA.add(catcher.stoper);
+	
+	return markerRootletterA;
+}
+
 function play(){
+
 	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
 	let toplay = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	let tostop = markerHiro.worldToLocal(markerletterA.localToWorld(new THREE.Vector3(0, 0, 0)));
 	
-	console.log(start)
-	if(start === 0 && options.start === false && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
-		options.start = true;														/*options.startPoint.position.*/
-		var s = setInterval(makeTB, 1050);
-		start = 1;
-		options.startPoint.visible = false;
-		options.endPoint.visible = true;
-	}
-	/*if(start === 0 && options.start === true && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
-		options.start = false;
-		start = 1;
-		options.endPoint.visible = false;
-		options.startPoint.visible = true;
-		console.log(222)
-	}*/
-}
-
-function catchB(target){
-	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
-	let tocatcher = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
-
-	if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
-		target.boom = true;
-		getScore(options);
-	}
-}
-
-
-function makeTB(){
-	let bubble = new TempoBubble();
-	markerRootHiro.add(bubble.bubble);
-	B.push(bubble);
-	
-	makeBX(B[Mtimes].bubble, B[Mtimes].whichcolor);
-	Mtimes++;
-}	
-function makeBX(bubble, whichcolor){
-	
-	let box = new Boxs(bubble, whichcolor);
-	BX.push(box);
-	box.Box.visible = false;
-}
-
-
-function power(n){
-	return (n)*(n);
-}
-
-function turn(){
-	start = 0;
-}
-
-function update() {
-	
-	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
-}
-
-
-
-function animate() {
-
-	requestAnimationFrame (animate);
-	
-	if( arToolkitSource.ready === false )	return
-		arToolkitContext.update( arToolkitSource.domElement )
-
-	/*if(options.start === true){
-		play();
-	}*/
-	
-	if(start === 1)
-		setTimeout("turn()", 3000);
-	if(start === 0)
-		play();
+	//確認
+	if(options.music.ended === true){
+		boardmusic.play();
+		options.pausePoint.visible = false;
+		options.confirm_Point.visible = true;
 		
-	if(options.start === true && start === 0){
-		
-		
-		for(;;){
-			if(B[i] == undefined){
-				i = 0;
-				break;
-			}
+
+		if(markerletterA.visible === true && power(options.confirm_Point.position.x - tostop.x) + power(options.confirm_Point.position.z - tostop.z) <= 0.6){
+			options.effect();
+			boardmusic.pause();
+			bgmusic.play();
 			
+			options.start = false;
+			options.play = false;
 			
-			if(B[i].bubble.visible === true){
-				//旋轉/////////////////////////////////
-				angle += 0.03;
-		
-				B[i].bubble.rotation.x = angle;
-				B[i].bubble.rotation.y = angle;
-		
-				//變大
-				if(B[i].bubble.scale.x < 5){
-					
-					B[i].sc += 0.03;
-					B[i].bubble.scale.set(B[i].sc, B[i].sc, B[i].sc);
+			options.startPoint.visible = true;
+			options.confirm_Point.visible = false;
 			
-					if(B[i].bubble.scale.x > 4 && B[i].bubble.scale.x < 5){
-						catchB(B[i]);
-						B[i].bubble.material.color.setHSL(0, 1, 0.5);
-					}
-				}
-				else if(B[i].bubble.scale.x >= 5 ){
-					B[i].bubble.visible = false;
-					markerRootHiro.remove(B[i].bubble);
-				}
-			}
-			//爆破
-			if(B[i].boom == true){
-				//泡泡本體要消失
-				B[i].bubble.visible = false;
-				markerRootHiro.remove(B[i].bubble);
-				
-				B[i].sc -= 0.15;
-				BX[i].Box.visible = true;
-				explode(angle*5, B[i].sc, BX[i].Box);
-				
-				if(BX[i].Box.children[0].material.opacity <= 0){
-					BX[i].Box.visible = false;
-					markerRootHiro.remove(BX[i].Box);
-				}
-			}
-			
-			i++;
+			options.music.currentTime = 0;			
 		}
 	}
 	
-		
-	renderer.render (scene, camera);
-	stats.update(); 
-
-	let msg ='';
-	
-	if (markerHiro.visible === true) {
-		msg += ' Hiro '
-
+	if(markerKanji.visible === true){	
+		//開始
+		if(options.start === false && Math.abs(options.startPoint.position.x - toplay.x) <=2 && Math.abs(options.startPoint.position.z - toplay.z) <= 0.6){
+			options.effect();					//點擊音效
+			bgmusic.pause();			//背景音樂
+			gamemusic(options.music);	//遊戲音樂
+			
+			options.start = true;				
+			options.play = true;
+			options.mbubble = true;		//製造泡泡
+			
+			options.interval = 1000;
+			setTimeout("makeTB(options.interval)", 5000);
+			options.startPoint.visible = false;
+			options.pausePoint.visible = true;
+		}
+		//繼續
+		if(options.start === true && options.play === false && power(options.conPoint.position.x - toplay.x) + power(options.conPoint.position.z - toplay.z) <= 0.6){
+			options.effect();
+			options.music.play();
+			
+			options.play = true;
+			options.mbubble = true;
+			//※暫停時泡泡的interval進行到哪個階段，然後接下去
+			options.count /= (3/50);
+			options.count %= options.interval;
+			setTimeout("makeTB(options.interval)", options.interval - options.count);//多久要呼叫下一個泡泡
+			options.count = 0;		//歸零，等待下一次暫停
+			
+			options.conPoint.visible = false;
+			options.endPoint.visible = false;
+			options.restartPoint.visible = false;
+			options.pausePoint.visible = true;
+			
+		}
 	}
-	if (markerKanji.visible === true) {
-		msg += ' Kanji';
-
-	}<!DOCTYPE html>
-<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-<!-- three.js library -->
-<script src='../../examples/vendor/three.js/build/three.min.js'></script>
-<script src="../../examples/vendor/three.js/examples/js/libs/stats.min.js"></script>
-<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-
-<!-- ar.js -->
-<script src="../../build/ar.js"></script>
-<script>THREEx.ArToolkitContext.baseURL = '../../'</script>
-
-<body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
-<div style='font-size:2em;position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
-	<a href="https://github.com/jeromeetienne/AR.js/" target="_blank">AR.js</a> - three.js
-	<br/>
-	Initialize both markers, but show them in controlled fashion
-	<p style='color:yellow' id='printDis'></p>
-</div>
-
-<!--style>
-	video {
-		-webkit-transform: scaleX(-1);
-		transform: scaleX(-1);
-	}
-</style-->
-
-<script src="Catcher.js"></script>
-<script src="TempoBubble.js"></script> 
-<script src="Boxs.js"></script>
-<script src="Options.js"></script>
-
-<script>
-
-// global variables
-var renderer, scene, camera;
-var stats;
-var markerKanji, markerHiro;
-var arToolKitSource, arToolKitContext;
-
-var _iOSDevice;
-var boxPos = new THREE.Vector3(), toKanji;
-var markerRootHiro = new THREE.Group();
-///////////////////////////////////////////
-
-
-var scale = 0, angle = 0;
-var options = new Options();
-var B = [], BX = [], box, bubble, catcher;
-var i = 0, start = 0, Mtimes = 0;
-
-
-init();
-animate();
-
-function playAudio() {
-　const audio = document.createElement("audio");
-　audio.src = "Zoom.mp3";
-　audio.play();
-}
-//playAudio();
-
-
-function init() {
-	// https://stackoverflow.com/questions/9038625/detect-if-device-is-ios?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
-	let _iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
-
-	console.log ('iOS: ' + _iOSDevice)
-
-
-	// init renderer
-	renderer	= new THREE.WebGLRenderer({
-		// antialias	: true,
-		alpha: true
-	});
-	renderer.setClearColor(new THREE.Color('lightgrey'), 0);
-	// renderer.setPixelRatio( 1/2 );
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	renderer.domElement.style.position = 'absolute';
-	renderer.domElement.style.top = '0px';
-	renderer.domElement.style.left = '0px';
-	document.body.appendChild( renderer.domElement );
-
-	// init scene and camera
-	scene	= new THREE.Scene();
 	
-	//////////////////////////////////////////////////////////////////////////////////
-	//		Initialize a basic camera
-	////////////////////////////////////////////////////////////////////////////////// 
-
-	// Create a camera
-	camera = new THREE.Camera();
-	scene.add(camera);
-
-	////////////////////////////////////////////////////////////////////////////////
-	//          handle arToolkitSource
-	////////////////////////////////////////////////////////////////////////////////
-
-	arToolkitSource = new THREEx.ArToolkitSource({
-		// to read from the webcam 
-		sourceType : 'webcam',
-	
-	})
-
-	arToolkitSource.init(function onReady(){
-		onResize()
-	})
-	
-	// handle resize
-	window.addEventListener('resize', function(){
-		onResize()
-	})
-	function onResize(){
-		arToolkitSource.onResize()	
-		arToolkitSource.copySizeTo(renderer.domElement)	
-		if( arToolkitContext.arController !== null ){
-			arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)	
-		}	
-	}
-	////////////////////////////////////////////////////////////////////////////////
-	//          initialize arToolkitContext
-	////////////////////////////////////////////////////////////////////////////////
-	
-	arToolkitContext = new THREEx.ArToolkitContext({
-		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../data/data/camera_para.dat',
-		detectionMode: 'mono',
-		maxDetectionRate: 30,
-		canvasWidth: 80*3,
-		canvasHeight: 60*3,
-	})
-	// initialize it
-	arToolkitContext.init(function onCompleted(){
-		// copy projection matrix to camera
-		camera.projectionMatrix.copy( arToolkitContext.getProjectionMatrix() );
-	})
-
-	markerKanji = addMarkerKanji();
-	scene.add (markerKanji);
-	markerHiro = addMarkerHiro();
-	scene.add (markerHiro); 
-	
-	stats = new Stats();
-	document.body.appendChild( stats.dom );
-
-}
-
-	
-function addMarkerHiro(){
-
-	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootHiro, {
-		type : 'pattern',
-		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
-	})
-
-	
-	var light = new THREE.PointLight(0xffffff, 10, 100);
-	markerRootHiro.add(light, options.startPoint, options.endPoint);	
-	light.position.set(0.5, 0.8, 0);
-	options.endPoint.visible = false;
-	
-	return markerRootHiro;
-}
-
-/*function play(){
-	setInterval(makeTB, 1050);
-	//playAudio();
-}*/
-
-	
-function addMarkerKanji () {
-	let markerRootKanji = new THREE.Group();
-	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootKanji, {
-		type : 'pattern',
-		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji'
-	})
-	
-	catcher = new Catcher(); 
-	
-	markerRootKanji.add(catcher.catcher);
-	
-	return markerRootKanji;
-}
-
-function play(){
-	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
-	let toplay = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
-	
-	if(start === 0 && options.start === false && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
-		options.start = true;														
-		setTimeout("makeTB(5000)", 1050);
-		start = 1;
-		options.startPoint.visible = false;
-		options.endPoint.visible = true;
-	}
-	if(start === 0 && options.start === true && power(2.5 - toplay.x) + power(0 - toplay.z) <= 0.5){
-		options.start = false;
-		start = 1;
-		options.endPoint.visible = false;
-		options.startPoint.visible = true;
+	if(markerletterA.visible === true){
+		//結束
+		if(options.start === true && power(options.endPoint.position.x - tostop.x) + power(options.endPoint.position.z - tostop.z) <= 0.6){
+			options.effect();
+			bgmusic.play();
+			options.music.pause();
+			options.music.currentTime = 0;
+			options.score = 0;		
+			
+			options.start = false;
+			options.play = false;
+			options.mbubble = false;
+			
+			options.startPoint.visible = true;
+			options.endPoint.visible = false;
+			options.conPoint.visible = false;
+			options.pausePoint.visible = false;
+			options.restartPoint.visible = false;
+			
+			points = 0;
+			clear(scoreGroup);
+			
+		}
+		//暫停
+		if(options.start === true && options.play === true && power(options.pausePoint.position.x - tostop.x) + power(options.pausePoint.position.z - tostop.z) <= 0.6){
+			options.effect();
+			options.music.pause();
+			
+			options.play = false;
+			options.mbubble = false;
+			
+			options.endPoint.visible = true;
+			options.conPoint.visible = true;
+			options.restartPoint.visible = true;
+			options.pausePoint.visible = false;
+		}
+		//重來
+		if(options.start === true && options.play === false && power(options.restartPoint.position.x - tostop.x) + power(options.restartPoint.position.z - tostop.z) <= 0.6){
+			options.effect();
+			options.music.pause();
+			options.music.currentTime = 0;
+			options.music.play();
+			options.score = 0;		
+			
+			popbubble(B, BX, Mtimes-1);
+			Mtimes = 0;
+			
+			options.play = true;
+			options.mbubble = true;
+			
+			setTimeout("makeTB(options.interval)", 5000);
+			options.endPoint.visible = false;
+			options.conPoint.visible = false;
+			options.restartPoint.visible = false;
+			options.pausePoint.visible = true;
+			
+			points = 0;
+			clear(scoreGroup);
+		}
 	}
 }
 
 
 function catchB(target){
-	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
-	let tocatcher = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	if(markerKanji.visible === true){
+		markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
+		let tocatcher = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
 
-	if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
-		target.boom = true;
-		getScore(options);
+		if(power(target.bubble.position.x - tocatcher.x) + power(target.bubble.position.z - tocatcher.z) <= 0.5){
+			target.boom = true;
+			hit.play();
+			
+			////
+			points += 135;
+			var tmp = points;
+		    while (tmp !== 0){
+				scoreGroup[digits].carrys(tmp % 10);
+				tmp = Math.floor(tmp / 10);
+				if (tmp === 0) 
+					break;
+				if (digits < scoreGroup.length-1) 
+					digits++;
+		    }
+		    digits = 0;
+
+		}
 	}
 }
 
 
 function makeTB(x){
-	if(options.start === false){
-		options.remain = (options.count*1000)/60;
-	}
-	else{
+	
+	if(options.mbubble === true){
 		let bubble = new TempoBubble();
 		markerRootHiro.add(bubble.bubble);
 		B.push(bubble);
-		
+			
 		makeBX(B[Mtimes].bubble, B[Mtimes].whichcolor);
 		Mtimes++;
+			
+			
+		setTimeout("makeTB(options.interval)", x);
+	}	
 		
-		
-		setTimeout("makeTB(10000)", x);
-	}
 }	
 function makeBX(bubble, whichcolor){
 	
@@ -577,32 +393,38 @@ function update() {
 	markerHiro.remove(markerHiro.getObjectByName('interMarkerLine'));
 }
 
-//泡泡的setTimeout運算暫停時間
 function animate() {
-
+	
+	
 	requestAnimationFrame (animate);
 	
 	if( arToolkitSource.ready === false )	return
 		arToolkitContext.update( arToolkitSource.domElement )
 	
-	if(start === 1){
-		setTimeout(() => start = 0, 2000)
-	}
-	else{
-		play();		
-		options.count++;
-		if(options.count > 60)
-			options.count = 0;
-	}
 	
-	if(options.start === true)	
+	play();
+
+	if(options.music.currentTime > 30)
+		options.mbubble = false;
+	
+	if(options.start === true && options.play === true){ //1count = 1/60秒 , setTimeout: 1 = 1/1000秒
+		options.count++;								 //1c : 1/60 = X : 1/1000 >>> X = 3/50			
+		
+		//進度條
+		progressbar.pbar.visible = true;
+		let progress = (options.music.currentTime/options.music.duration)*2*Math.PI;
+		progressbar.pbar.geometry.dispose();
+		progressbar.p = new THREE.RingGeometry(0.1, 1.5, 30, 3, -Math.PI/2, progress);
+		progressbar.pbar.geometry = progressbar.p;
+		
+		//泡泡
 		for(;;){
 			if(B[i] == undefined){
 				i = 0;
 				break;
 			}
-			
-			
+				
+			//console.log(options.music.currentTime/options.music.duration);
 			if(B[i].bubble.visible === true){
 				//旋轉/////////////////////////////////
 				angle += 0.03;
@@ -623,7 +445,10 @@ function animate() {
 				}
 				else if(B[i].bubble.scale.x >= 5 ){
 					B[i].bubble.visible = false;
+					
+					miss(B[i].bubble);
 					markerRootHiro.remove(B[i].bubble);
+					
 				}
 			}
 			//爆破
@@ -636,16 +461,21 @@ function animate() {
 				BX[i].Box.visible = true;
 				explode(angle*5, B[i].sc, BX[i].Box);
 				
-				if(BX[i].Box.children[0].material.opacity <= 0){
+				if(BX[i].Box.children[0].material.opacity <= 0){ //opacity 透明度
 					BX[i].Box.visible = false;
-					markerRootHiro.remove(BX[i].Box);
+					markerRootHiro.remove(BX[i].Box);	
 				}
 			}
 			
 			i++;
 		}
-	else{
+	} 								   //已有泡泡
+	else if(options.start === false && B != 0){
+		Mtimes -= 1;
+		popbubble(B, BX, Mtimes);
+		Mtimes = 0;
 		
+		progressbar.pbar.visible = false;
 	}
 	
 		
@@ -662,16 +492,10 @@ function animate() {
 		msg += ' Kanji';
 
 	}
-	update();
-	
-	$('#printDis').text (msg)
-	
-}
+	if (markerletterA.visible === true) {
+		msg += ' letterA';
 
-window.focus();
-
-</script></body>
-
+	}
 	update();
 	
 	$('#printDis').text (msg)

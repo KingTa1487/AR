@@ -1,6 +1,6 @@
 class Options{
 	constructor(){
-		this.start = false, this.play = false;
+		this.start = false, this.play = false, this.mbubble = false;
 		this.score = 0;
 		this.count = 0;
 		this.interval = 0;// 泡泡週期
@@ -8,7 +8,12 @@ class Options{
 		//遊戲音樂
 		this.music = document.createElement("audio");
 　		this.music.preload;
-		this.music.src = "Never_Let_You_Go.mp3";
+		this.music.src = "arcade-music-loop.wav";
+		
+		//選項音效
+		this.choice = document.createElement("audio");
+　		this.choice.preload;
+		this.choice.src = "b3.wav";
 		
 		let loader = new THREE.TextureLoader();
 		loader.crossOrigin = '';
@@ -66,34 +71,48 @@ class Options{
 		this.restartPoint = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 3.5), restartmap);
 		this.restartPoint.rotation.x = -Math.PI/2;
 		this.restartPoint.position.set(2, 0.5, 8);
+		
+		//確認
+		let confirm_ = loader.load('confirm.png');
+		let confirm_map = new THREE.MeshBasicMaterial({
+			map:confirm_,
+			side:THREE.DoubleSide,
+			transparent:true
+		});
+		this.confirm_Point = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 3.5), confirm_map);
+		this.confirm_Point.rotation.x = -Math.PI/2;
+		this.confirm_Point.position.set(2, 0.5, 7);
 	
+		////////
+		//位階
+		let rank = loader.load('rank.jpg');
+		rank.wrapS = THREE.RepeatWrapping;
+		rank.wrapT = THREE.RepeatWrapping;
+		rank.repeat.set (.25, 1);	
+		rank.offset.set (0, 1);
+		let rankmap = new THREE.MeshBasicMaterial({
+			map:rank,
+			side:THREE.DoubleSide,
+			transparent:true
+		});
+		this.rankPoint = new THREE.Mesh(new THREE.CircleGeometry(1.8, 32), rankmap);
+		this.rankPoint.rotation.x = -Math.PI/2;
+		this.rankPoint.position.set(-4, 0.4, 2);
+		
+		
 	}
-
 	
+	effect(){		//點擊音效
+　		this.choice.play();
+	}
 }
 
-/*function getScore(options){
-	options.score++;
-	
-	return options.score;
-}*/
-
-function gamemusic(music) {
+function gamemusic(music) {//遊戲音樂
 　	music.play();
 }
 
-function effect(){		//點擊音效
-	const sound = document.createElement("audio");
-　	sound.preload;
-	sound.src = "b3.wav";
-　	sound.play();
-}
-function hit(){			//成功觸及音效
-	const sound = document.createElement("audio");
-　	sound.preload;
-	sound.src = "tambourine-hit-2.mp3";
-　	sound.play();
-}
+
+
 
 function popbubble(B, BX, times){	//刪除所有製造的泡泡，遊戲結束或重來
 	
