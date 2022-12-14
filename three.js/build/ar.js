@@ -1095,8 +1095,8 @@ var Qb=[Ik,Zh,_h,Qj,Qi,Pi,Ri,Ag,sg,qg,rg,yg,kh,jh,Oi,Mj];var Rb=[Jk,ki,ji,gi];va
 		@return {VideoElement} Returns the created video element.
 	*/
 	ARController.getUserMedia = function(configuration) {
-		///////////var facing = configuration.facingMode || 'environment';
-		var facing = configuration.facingMode || 'user';
+		var facing = configuration.facingMode || 'environment';
+		//var facing = configuration.facingMode || 'user';
 
 		var onSuccess = configuration.onSuccess;
 		var onError = configuration.onError || function(err) { console.error("ARController.getUserMedia", err); };
@@ -5926,7 +5926,8 @@ ARjs.Source.prototype._initSourceWebcam = function(onReady, onError) {
                 var userMediaConstraints = {
 			audio: false,
 			video: {
-				facingMode: 'user',
+				///////facingMode: 'user',      前置鏡頭
+				facingMode: 'environment',    ////後置鏡頭
 				width: {
 					ideal: _this.parameters.sourceWidth,
 					// min: 1024,

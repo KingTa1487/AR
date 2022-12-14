@@ -26,7 +26,7 @@ class Options{
 		});
 		this.startPoint = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), beginmap);
 		this.startPoint.rotation.x = -Math.PI/2;
-		this.startPoint.position.set(0, 0, 8);
+		this.startPoint.position.set(0, 0, 3.5);
 		
 		//結束
 		let end = loader.load('end.png');
@@ -37,7 +37,7 @@ class Options{
 		});
 		this.endPoint = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), endmap);
 		this.endPoint.rotation.x = -Math.PI/2;
-		this.endPoint.position.set(-2, 0.5, 8);
+		this.endPoint.position.set(-2, 0.5, 3);
 		
 		//暫停
 		let pause = loader.load('pause.png');
@@ -70,7 +70,7 @@ class Options{
 		});
 		this.restartPoint = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 3.5), restartmap);
 		this.restartPoint.rotation.x = -Math.PI/2;
-		this.restartPoint.position.set(2, 0.5, 8);
+		this.restartPoint.position.set(2, 0.5, 3);
 		
 		//確認
 		let confirm_ = loader.load('confirm.png');
@@ -81,7 +81,7 @@ class Options{
 		});
 		this.confirm_Point = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 3.5), confirm_map);
 		this.confirm_Point.rotation.x = -Math.PI/2;
-		this.confirm_Point.position.set(2, 0.5, 7);
+		this.confirm_Point.position.set(2, 0.5, 3);
 	
 		////////
 		//位階
@@ -95,9 +95,9 @@ class Options{
 			side:THREE.DoubleSide,
 			transparent:true
 		});
-		this.rankPoint = new THREE.Mesh(new THREE.CircleGeometry(1.8, 32), rankmap);
+		this.rankPoint = new THREE.Mesh(new THREE.CircleGeometry(1.3, 32), rankmap);
 		this.rankPoint.rotation.x = -Math.PI/2;
-		this.rankPoint.position.set(-4, 0.4, 2);
+		this.rankPoint.position.set(-4, 0.4, 1);
 		
 		
 	}
