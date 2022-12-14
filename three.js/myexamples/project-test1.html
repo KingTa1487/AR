@@ -185,10 +185,11 @@ function animate() {
 	theta += 0.015;
 	requestAnimationFrame (animate);
 	
+	update();
 	if( arToolkitSource.ready === false )	return
 	arToolkitContext.update( arToolkitSource.domElement )
 
-	/*toKanji = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
+	toKanji = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
 	var tkxz = Math.sqrt(toKanji.x*toKanji.x + toKanji.z*toKanji.z);
 	
 	if(tkx >= toKanji.x && Math.sin(theta) < 0){
@@ -198,21 +199,15 @@ function animate() {
 		i = 1;
 	}
 	else{
+		tkx = 0.1*i/5;
+		boxPos.set(tkx, Math.sin(theta), tkx*toKanji.z/toKanji.x);
 		markerHiro.children[0].visible = true;
 	}
 		
 	
-	tkx = 0.1*i/10;
+	markerHiro.children[0].position.copy (boxPos);
 	
-	boxPos.set(tkx, Math.sin(theta), tkx*toKanji.z/toKanji.x);
-	markerHiro.children[0].position.copy (boxPos);*/
-	
-	toKanji = markerHiro.worldToLocal(markerKanji.localToWorld(new THREE.Vector3(0, 0, 0)));
-	
-	if(markerHiro.children[0].position.x < 2 && markerHiro.children[0].visible === true){
-		markerHiro.children[0].position.x += 0.05;
-	}
-	else if(markerHiro.children[1].position.z < 1 && markerHiro.children[1].visible === true){
+	if(markerHiro.children[1].position.z < 2 && markerHiro.children[1].visible === true){
 		markerHiro.children[1].position.z += 0.02;
 	}
 	
@@ -230,7 +225,7 @@ function animate() {
 		msg += ' Kanji';
 
 	}
-	update();
+	
 	
 	$('#printDis').text (msg)
 	
