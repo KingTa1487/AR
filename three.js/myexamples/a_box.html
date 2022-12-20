@@ -13,15 +13,8 @@
 <div style='position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
 <a href="<!--https://github.com/jeromeetienne/AR.js/-->https://github.com/AR-js-org/AR.js" target="_blank">AR.js</a>
 	 - three.js<br>
-Minimal Version
+a box
 </div>
-
-<!--style>
-	video {
-		-webkit-transform: scaleX(-1);
-		transform: scaleX(-1);
-	}
-</style-->
 
 <script>
 
@@ -30,8 +23,8 @@ var renderer, scene, camera;
 var stats;
 var arToolKitSource, arToolKitContext;
 var markerHiro;
-var angle = 0, count = 2, angle2 ;
-var cylinder;
+var box = new THREE.Group();
+var light, theta = 0;
 
 init();
 animate();
@@ -49,6 +42,8 @@ function init() {
 	renderer.domElement.style.position = 'absolute'
 	renderer.domElement.style.top = '0px'
 	renderer.domElement.style.left = '0px'
+	renderer.shadowMap.enabled = true;
+	
 	document.body.appendChild( renderer.domElement );
 
 	stats = new Stats();
@@ -114,30 +109,43 @@ function addMarkerHiro(){
 
 	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
 		type : 'pattern',
-		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/hiro.patt'
+		patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/a_box.patt'
 	})
-	var light = new THREE.PointLight();
-	light.position.set(0, 80, 0);
-	scene.add(light);
 
-	// add a torus knot & a transparent box	
-	/*var geometry	= new THREE.TorusKnotGeometry(0.3,0.1,64,16);
-	var material	= new THREE.MeshPhongMaterial({color:0x555fea});
-	var mesh	= new THREE.Mesh( geometry, material );
-	mesh.position.y	= 0.5
-	markerRoot.add (mesh);
+	light = new THREE.PointLight();
+	light.castShadow = true;
+	light.position.set(2, 2, 0);
 	
-	mesh = new THREE.Mesh (new THREE.BoxGeometry(1,1,1), 
-				new THREE.MeshNormalMaterial({transparent:true, opacity:0.3}));
-	mesh.position.y	= 0.5
-	markerRoot.add (mesh);*/
-	var ball = new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 5), new THREE.MeshNormalMaterial());
-	ball.position.z = 0.5;
-	markerRoot.add(ball);
+	for(let i=0; i<4; i++){
+		let wall = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), new THREE.MeshPhongMaterial({color: 'cyan', side:THREE.DoubleSide}));
+		
+		wall.position.set(-0.75+i*0.75, -0.75, -0.75+i*0.75);
+		wall.rotation.y = (Math.PI/2)*(i+1);
+		
+		if(i === 0 || i === 2)
+			 wall.position.z = 0;
+		if(i === 1 || i === 3){
+			wall.position.x = 0;
+			wall.position.z -= 0.75;
+			wall.rotation.y += Math.PI;
+		}
+		wall.receiveShadow = true;
+		wall.castShadow = true;
+		
+		markerRoot.add(wall);
+	}
+	let wall2 = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), new THREE.MeshPhongMaterial({color:'cyan', transparent:true, side:THREE.DoubleSide}));
+	wall2.receiveShadow = true;
+	wall2.position.y = -1;
+	wall2.rotation.x = Math.PI/2;
 	
-	cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.53, 0.5, 32), new THREE.MeshBasicMaterial({color:"hsl(240, 100%, 50%)"}));
-	cylinder.position.y = 0.5;
-	markerRoot.add(cylinder);
+	let plant = new THREE.Mesh(new THREE.RingGeometry(Math.sqrt(4.5)/2, 3, 4), new THREE.MeshPhongMaterial({color:'cyan', transparent:true, side:THREE.DoubleSide}));
+	plant.rotation.x = Math.PI/2;
+	plant.rotation.z = Math.PI/4;
+	
+	//box.add(light, wall2, plant);
+	markerRoot.add(light, wall2, plant);
+	
 	return markerRoot;
 }	
 
@@ -147,26 +155,10 @@ function animate() {
 	
 	if( arToolkitSource.ready === false )	return
 	arToolkitContext.update( arToolkitSource.domElement )
-
-	//markerHiro.children[0].rotation.x += 0.1;
-	angle += 0.1;
 	
-	markerHiro.children[0].position.set(-0.5*Math.sin(angle), 0.5, 0.5*Math.cos(angle));
+	theta += 0.01;
 	
-	if(count <= 0)
-		angle2 *= -1;
-	if(angle2 < 0 && count >= 2)
-		angle2 *= -1;
-		
-	markerHiro.children[1].position.y += 0.06*Math.sin(angle);
-	var c ;
-	if(Math.sin(angle)==1)
-		c=1;
-	else if(Math.sin(angle)==-1)
-		c=0;
-	else
-		c = (1-Math.sin(angle))/2;
-	cylinder.material.color = new THREE.Color().setHSL(0.666, c, 0.5);
+	light.position.set(Math.cos(theta)*2, 2, Math.sin(theta)*2);
 	
 	
 	renderer.render (scene, camera);	
