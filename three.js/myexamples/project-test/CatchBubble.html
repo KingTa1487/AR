@@ -259,8 +259,10 @@ function play(){
 			options.play = true;
 			options.mbubble = true;		//製造泡泡
 			
-			options.interval = 850;	//70.5bpm		(60/70.5)*1000
-			setTimeout("makeTB(options.interval)", 4250);
+			options.interval = 1700;	//70.5/2bpm		(60/(70.5/2))*1000    練習
+			//options.interval = 1121;	//53.5bpm		(60/53.5)*1000	  正式
+			
+			setTimeout("makeTB(options.interval)", 3363);
 			options.startPoint.visible = false;
 			options.pausePoint.visible = true;
 		}

@@ -40,13 +40,21 @@ function clear (scoreGroup){
 	}
 }
 
-function rankSet (score) {		
+function rankSet (score) {		 11 1111  11111 111111
 		
+		////////練習
 		var num = 3;
-		if (score > 1350 && score <= 2565) num = 2;
-		if (score > 2700 && score <= 3915) num = 1;
-		if (score > 4050) num = 0;
 		
+		///* 練習
+		if (score > 810 && score <= 1485) num = 2;
+		if (score > 1620 && score <= 2025) num = 1;
+		if (score > 2025) num = 0;
+		//*/
+		/*正式
+		if (score > 945 && score <= 2025) num = 2;
+		if (score > 2160 && score <= 2970) num = 1;
+		if (score > 2970) num = 0;
+		//*/
 		if (options.rankPoint) {
 			var texture = options.rankPoint.material.map;
 			texture.offset.x = num * .25;

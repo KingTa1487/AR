@@ -8,8 +8,8 @@ class Options{
 		//遊戲音樂
 		this.music = document.createElement("audio");
 　		this.music.preload;
-		this.music.src = "arcade-music-loop.wav";
-		
+		this.music.src = "arcade-music-loop.wav";	//We Wish You a Merry Christmas.mp3   正式
+													//arcade-music-loop.wav   練習
 		//選項音效
 		this.choice = document.createElement("audio");
 　		this.choice.preload;
