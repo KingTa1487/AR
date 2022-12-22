@@ -45,12 +45,12 @@ function rankSet (score) {		 ///11 1111  11111 111111
 		////////練習
 		var num = 3;
 		
-		///* 練習
-		if (score > 810 && score <= 1485) num = 2;
-		if (score > 1620 && score <= 2025) num = 1;
-		if (score > 2025) num = 0;
+		/* 快
+		if (score > 810*2 && score <= 1485*2) num = 2;
+		if (score > 1620*2 && score <= 2025*2) num = 1;
+		if (score > 2025*2) num = 0;
 		//*/
-		/*正式
+		///*練習
 		if (score > 945 && score <= 2025) num = 2;
 		if (score > 2160 && score <= 2970) num = 1;
 		if (score > 2970) num = 0;
