@@ -40,7 +40,7 @@ function clear (scoreGroup){
 	}
 }
 
-function rankSet (score) {		 11 1111  11111 111111
+function rankSet (score) {		 ///11 1111  11111 111111
 		
 		////////練習
 		var num = 3;
